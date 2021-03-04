@@ -14,70 +14,33 @@
 # limitations under the License.
 #
 
-from typing import List
-
 import numpy as np
-
-from rl_coach.core_types import RunPhase, ActionType
-from rl_coach.exploration_policies.exploration_policy import ContinuousActionExplorationPolicy, ExplorationParameters
-from rl_coach.spaces import ActionSpace, BoxActionSpace, GoalsSpace
-
-
-# Based on on the description in:
-# https://math.stackexchange.com/questions/1287634/implementing-ornstein-uhlenbeck-in-matlab
-
-class OUProcessParameters(ExplorationParameters):
-    def __init__(self):
-        super().__init__()
-        self.mu = 0
-        self.theta = 0.15
-        self.sigma = 0.2
-        self.dt = 0.01
-
-    @property
-    def path(self):
-        return 'rl_coach.exploration_policies.ou_process:OUProcess'
 
 
 # Ornstein-Uhlenbeck process
-class OUProcess(ContinuousActionExplorationPolicy):
+class OUProcess:
     """
     OUProcess exploration policy is intended for continuous action spaces, and selects the action according to
     an Ornstein-Uhlenbeck process. The Ornstein-Uhlenbeck process implements the action as a Gaussian process, where
     the samples are correlated between consequent time steps.
     """
-    def __init__(self, action_space: ActionSpace, mu: float=0, theta: float=0.15, sigma: float=0.2, dt: float=0.01):
+    def __init__(self, action_space, mu=0, theta=0.15, sigma=0.2, dt=0.01):
         """
         :param action_space: the action space used by the environment
         """
-        super().__init__(action_space)
-        self.mu = float(mu) * np.ones(self.action_space.shape)
+        self.action_space = action_space
+        self.mu = float(mu) * np.ones(action_space)
         self.theta = float(theta)
-        self.sigma = float(sigma) * np.ones(self.action_space.shape)
-        self.state = np.zeros(self.action_space.shape)
+        self.sigma = float(sigma) * np.ones(action_space)
+        self.state = np.zeros(action_space)
         self.dt = dt
 
-    def reset(self):
-        self.state = np.zeros(self.action_space.shape)
+    def reset(self, sigma):
+        self.sigma = sigma
+        self.state = np.zeros(self.action_space)
 
     def noise(self):
         x = self.state
         dx = self.theta * (self.mu - x) * self.dt + self.sigma * np.random.randn(len(x)) * np.sqrt(self.dt)
         self.state = x + dx
         return self.state
-
-    def get_action(self, action_values: List[ActionType]) -> ActionType:
-        if self.phase == RunPhase.TRAIN:
-            noise = self.noise()
-        else:
-            noise = np.zeros(self.action_space.shape)
-
-        action = action_values.squeeze() + noise
-
-        return action
-
-    def get_control_param(self):
-        if self.phase == RunPhase.TRAIN:
-            return self.state
-        else:
-            return np.zeros(self.action_space.shape)

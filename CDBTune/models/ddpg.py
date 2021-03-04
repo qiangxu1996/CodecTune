@@ -14,6 +14,7 @@ from torch.nn import init, Parameter
 import torch.nn.functional as F
 import torch.optim as optimizer
 from torch.autograd import Variable
+from ou_process import OUProcess
 from prioritized_replay_memory import PrioritizedReplayMemory
 
 
