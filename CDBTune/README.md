@@ -1,3 +1,40 @@
+```bash
+# The following steps are tested on Fedora 33
+# Substitute the dnf commands with appropriate ones on other Linux systems
+sudo dnf upgrade
+
+# Prepare MySQL
+sudo dnf install sysbench community-mysql-server[-devel]
+sudo systemctl start mysqld
+sudo mysql_secure_installation
+sudo mysql -u root -p
+# In the database shell:
+# ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '123456';
+# create database sbtest;
+
+# Prepare Python environment
+sudo dnf install gcc conda
+# Logout and login again for conda to work
+conda create -n cdbtune python=2 mysql-python pexpect scikit-learn
+conda activate cdbtune
+pip install -r <proj root>/requirements.txt
+
+# Train the model
+cd <proj root>
+sh scripts/prepare.sh read 127.0.0.1 3306 123456
+cd server
+python server.py
+# On another shell with the cdbtune env activated
+cd <proj root>/tuner
+python train.py
+
+# Evaluate the model
+cd <proj root>/tuner
+python evaluate.py --params model_params/train_ddpg_xxxxxxxxxx_xx  # without _[actor|critic].pth
+```
+
+------
+
 ### 环境
 
 | 主机名   | ip             | 必装软件    | 功能               | 举例用户 | 密码   | 操作系统    | Python版本 |
