@@ -35,7 +35,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=16, help='Training Batch Size')
     parser.add_argument('--epoches', type=int, default=5000000, help='Training Epoches')
     parser.add_argument('--benchmark', type=str, default='sysbench', help='[sysbench, tpcc]')
-    parser.add_argument('--metric_num', type=int, default=63, help='metric nums')
+    parser.add_argument('--metric_num', type=int, default=74, help='metric nums')
     parser.add_argument('--default_knobs', type=int, default=6, help='default knobs')
     opt = parser.parse_args()
 
@@ -49,6 +49,7 @@ if __name__ == '__main__':
             num_other_knobs=opt.other_knob)
     else:
         env = environment.Server(wk_type=opt.workload, instance_name=opt.instance)
+        env.num_metric = opt.metric_num
 
     # Build models
     ddpg_opt = dict()
@@ -127,7 +128,7 @@ if __name__ == '__main__':
         logger.info("\n[Env initialized][Metric tps: {} lat: {} qps: {}]".format(
             initial_metrics[0], initial_metrics[1], initial_metrics[2]))
 
-        model.reset(sigma)
+        model.reset(0.1)
         t = 0
         while True:
             step_time = utils.time_start()

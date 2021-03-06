@@ -16,7 +16,7 @@ docker = False
 
 def get_state():
     check_start()
-    m = os.popen('service mysql status')
+    m = os.popen('service mysqld status')
     s = m.readlines()[2]
     s = s.split(':')[1].replace(' ', '').split('(')[0]
     if s == 'failed':
@@ -28,7 +28,7 @@ def check_start():
     a = sudo_exec('sudo tail -1 /var/log/mysql/ubunturmw.err', '123456')
     a = a.strip('\n\r')
     if a.find('pid ended') != -1:
-        sudo_exec('sudo service mysql start', '123456')
+        sudo_exec('sudo service mysqld start', '123456')
 
 
 def sudo_exec(cmdline, passwd):
@@ -70,7 +70,7 @@ def start_mysql(instance_name, configs):
         sudo_exec(cmd, '123456')
     else:
         write_cnf_file(params)
-        sudo_exec('sudo service mysql restart', '123456')
+        sudo_exec('sudo service mysqld restart', '123456')
     time.sleep(5)
     return 1
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # script_path="/home/rmw/sysbench-1.0/src/lua/"
-script_path="/usr/local/sysbench1.0.14/share/sysbench/"
+script_path="/usr/share/sysbench/"
 
 if [ "${1}" == "read" ]
 then
@@ -24,9 +24,9 @@ sysbench ${run_script} \
         --range-size=100 \
         --events=0 \
         --rand-type=uniform \
-	--tables=200 \
-	--table-size=10000000 \
+	--tables=8 \
+	--table-size=1000000 \
 	--report-interval=5 \
-	--threads=256 \
+	--threads=3 \
 	--time=$5 \
 	run >> $6

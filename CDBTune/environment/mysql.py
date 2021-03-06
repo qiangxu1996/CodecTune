@@ -18,9 +18,9 @@ import knobs
 import requests
 import psutil
 
-TEMP_FILES = "/data/cdbtune/AutoTuner/train_result/tmp/"
-BEST_NOW = "/data/cdbtune/AutoTuner/tuner/"
-PROJECT_DIR = "/data/cdbtune/"
+TEMP_FILES = "tmp/"
+BEST_NOW = ""
+PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # TEMP_FILES = "/home/rmw/train_result/tmp/"
 # PROJECT_DIR = "/home/rmw/"
 
@@ -232,7 +232,7 @@ class MySQLEnv(object):
         knobs.save_knobs(
             knob=knob,
             metrics=external_metrics,
-            knob_file='%sAutoTuner/tuner/save_knobs/knob_metric.txt' % PROJECT_DIR
+            knob_file='%s/tuner/save_knobs/knob_metric.txt' % PROJECT_DIR
         )
         return reward, next_state, terminate, self.score, external_metrics, restart_time
 
@@ -256,14 +256,14 @@ class MySQLEnv(object):
             time_sysbench = int(knob['innodb_buffer_pool_size']/1024.0/1024.0/1024.0/1.1)
         if method == 'sysbench':
             a = time.time()
-            print "bash %sAutoTuner/scripts/run_sysbench.sh %s %s %d %s %d %s" % (PROJECT_DIR,
+            print "bash %s/scripts/run_sysbench.sh %s %s %d %s %d %s" % (PROJECT_DIR,
                                                                                    self.wk_type,
                                                                                    self.db_info['host'],
                                                                                    self.db_info['port'],
                                                                                    self.db_info['passwd'],
                                                                                    time_sysbench,
                                                                                    filename)
-            os.system("bash %sAutoTuner/scripts/run_sysbench.sh %s %s %d %s %d %s" % (PROJECT_DIR,
+            os.system("bash %s/scripts/run_sysbench.sh %s %s %d %s %d %s" % (PROJECT_DIR,
                                                                                    self.wk_type,
                                                                                    self.db_info['host'],
                                                                                    self.db_info['port'],
@@ -292,7 +292,7 @@ class MySQLEnv(object):
 
             timer = threading.Timer(170, kill_tpcc)
             timer.start()
-            os.system('bash %sAutoTuner/scripts/run_tpcc.sh %s %d %s %s' % (PROJECT_DIR,
+            os.system('bash %s/scripts/run_tpcc.sh %s %d %s %s' % (PROJECT_DIR,
                                                                             self.db_info['host'],
                                                                             self.db_info['port'],
                                                                             self.db_info['passwd'],
@@ -403,7 +403,7 @@ class Server(MySQLEnv):
         knobs.save_knobs(
             self.default_knobs,
             metrics=external_metrics,
-            knob_file='%sAutoTuner/tuner/save_knobs/knob_metric.txt' % PROJECT_DIR
+            knob_file='%s/tuner/save_knobs/knob_metric.txt' % PROJECT_DIR
         )
         return state, external_metrics
 

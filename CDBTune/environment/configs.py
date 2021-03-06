@@ -6,11 +6,11 @@ description: MySQL Database Configurations
 
 instance_config = {
     'mysql1': {
-        'host': '192.168.0.11',
+        'host': '127.0.0.1',
         'user': 'root',
-        'passwd': '12345678',
+        'passwd': '123456',
         'port': 3306,
-        'database': 'data',
+        'database': 'sbtest',
         'memory': 34359738368
     },
     'mysql2': {

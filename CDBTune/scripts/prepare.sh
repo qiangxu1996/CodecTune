@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-script_path="/usr/local/sysbench1.0.14/share/sysbench/"
+script_path="/usr/share/sysbench/"
 
 if [ ${1} == "read" ]
 then
@@ -15,7 +15,7 @@ fi
 sysbench ${run_script} \
 	--mysql-host=$2 \
 	--mysql-port=$3 \
-	--mysql-user=cdbtune \
+	--mysql-user=root \
 	--mysql-password=$4 \
 	--mysql-db=sbtest \
 	--db-driver=mysql \

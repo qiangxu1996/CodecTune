@@ -22,10 +22,11 @@ parser.add_argument('--instance', type=str, default='mysql1', help='Choose MySQL
 parser.add_argument('--method', type=str, default='ddpg', help='Choose Algorithm to solve [`ddpg`,`dqn`]')
 parser.add_argument('--memory', type=str, default='', help='add replay memory')
 parser.add_argument('--max_steps', type=int, default=50, help='evaluate test steps')
+parser.add_argument('--default_knobs', type=int, default=6, help='default knobs')
 parser.add_argument('--other_knob', type=int, default=0, help='Number of other knobs')
 parser.add_argument('--batch_size', type=int, default=2, help='Training Batch Size')
 parser.add_argument('--benchmark', type=str, default='sysbench', help='[sysbench, tpcc]')
-parser.add_argument('--metric_num', type=int, default=65, help='metric nums')
+parser.add_argument('--metric_num', type=int, default=74, help='metric nums')
 
 opt = parser.parse_args()
 
@@ -39,6 +40,7 @@ if opt.tencent:
         num_other_knobs=opt.other_knob)
 else:
     env = environment.Server(wk_type=opt.workload, instance_name=opt.instance)
+    env.num_metric = opt.metric_num
 
 # Build models
 ddpg_opt = dict()
@@ -50,7 +52,7 @@ ddpg_opt['model'] = opt.params
 n_states = opt.metric_num
 gamma = 0.9
 memory_size = 100000
-num_actions = 16 + opt.other_knob
+num_actions = opt.default_knobs + opt.other_knob
 ddpg_opt['gamma'] = gamma
 ddpg_opt['batch_size'] = opt.batch_size
 ddpg_opt['memory_size'] = memory_size
