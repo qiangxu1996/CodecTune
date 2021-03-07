@@ -4,7 +4,7 @@
 sudo dnf upgrade
 
 # Prepare MySQL
-sudo dnf install sysbench community-mysql-server[-devel]
+sudo dnf install sysbench community-mysql-server
 sudo systemctl start mysqld
 sudo mysql_secure_installation
 sudo mysql -u root -p
