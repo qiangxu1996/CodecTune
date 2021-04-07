@@ -97,7 +97,7 @@ private:
     }
 };
 
-auto Encoder::STOP = reinterpret_cast<x265_picture *>(1);
+x265_picture * Encoder::STOP = reinterpret_cast<x265_picture *>(1);
 
 int main(int argc, char *argv[]) {
     cv::VideoCapture video(argv[1]);
