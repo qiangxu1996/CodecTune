@@ -24,32 +24,27 @@ def generate_knob(action, method):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--tencent', action='store_true', help='Use Tencent Server')
-    parser.add_argument('--params', type=str, default='', help='Load existing parameters')
-    parser.add_argument('--workload', type=str, default='read', help='Workload type [`read`, `write`, `readwrite`]')
-    parser.add_argument('--instance', type=str, default='mysql1', help='Choose MySQL Instance')
-    parser.add_argument('--method', type=str, default='ddpg', help='Choose Algorithm to solve [`ddpg`,`dqn`]')
-    parser.add_argument('--memory', type=str, default='', help='add replay memory')
-    parser.add_argument('--noisy', action='store_true', help='use noisy linear layer')
-    parser.add_argument('--other_knob', type=int, default=0, help='Number of other knobs')
-    parser.add_argument('--batch_size', type=int, default=16, help='Training Batch Size')
-    parser.add_argument('--epoches', type=int, default=5000000, help='Training Epoches')
-    parser.add_argument('--benchmark', type=str, default='sysbench', help='[sysbench, tpcc]')
-    parser.add_argument('--metric_num', type=int, default=74, help='metric nums')
-    parser.add_argument('--default_knobs', type=int, default=6, help='default knobs')
+    parser.add_argument('--input', type=str, help='.mkv video input')
+    parser.add_argument('--width', type=int, help='width of the input')
+    parser.add_argument('--height', type=int, help='height of the input')
+    parser.add_argument('--fps', type=int, help='frames per second')
+    # parser.add_argument('--tencent', action='store_true', help='Use Tencent Server')
+    # parser.add_argument('--params', type=str, default='', help='Load existing parameters')
+    # parser.add_argument('--workload', type=str, default='read', help='Workload type [`read`, `write`, `readwrite`]')
+    # parser.add_argument('--instance', type=str, default='mysql1', help='Choose MySQL Instance')
+    # parser.add_argument('--method', type=str, default='ddpg', help='Choose Algorithm to solve [`ddpg`,`dqn`]')
+    # parser.add_argument('--memory', type=str, default='', help='add replay memory')
+    # parser.add_argument('--noisy', action='store_true', help='use noisy linear layer')
+    # parser.add_argument('--other_knob', type=int, default=0, help='Number of other knobs')
+    # parser.add_argument('--batch_size', type=int, default=16, help='Training Batch Size')
+    # parser.add_argument('--epoches', type=int, default=5000000, help='Training Epoches')
+    # parser.add_argument('--benchmark', type=str, default='sysbench', help='[sysbench, tpcc]')
+    # parser.add_argument('--metric_num', type=int, default=63, help='metric nums')
+    # parser.add_argument('--default_knobs', type=int, default=6, help='default knobs')
     opt = parser.parse_args()
 
     # Create Environment
-    if opt.tencent:
-        env = environment.TencentServer(
-            wk_type=opt.workload,
-            instance_name=opt.instance,
-            method=opt.benchmark,
-            num_metric=opt.metric_num,
-            num_other_knobs=opt.other_knob)
-    else:
-        env = environment.Server(wk_type=opt.workload, instance_name=opt.instance)
-        env.num_metric = opt.metric_num
+    env = environment.MyEncoder(wk_type=opt.workload, instance_name=opt.instance)
 
     # Build models
     ddpg_opt = dict()
@@ -128,7 +123,7 @@ if __name__ == '__main__':
         logger.info("\n[Env initialized][Metric tps: {} lat: {} qps: {}]".format(
             initial_metrics[0], initial_metrics[1], initial_metrics[2]))
 
-        model.reset(0.1)
+        model.reset(sigma)
         t = 0
         while True:
             step_time = utils.time_start()
