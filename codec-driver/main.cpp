@@ -24,7 +24,6 @@ public:
         param->sourceHeight = height;
         param->fpsNum = fps;
         param->fpsDenom = 1;
-        param->bEnablePsnr = 1;
         param->bEnableSsim = 1;
         param->rc.bitrate = 4500;
         param->rc.rateControlMode = X265_RC_ABR;
