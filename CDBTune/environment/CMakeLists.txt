@@ -7,6 +7,7 @@ include_directories(/usr/local/include)
 link_directories(/usr/local/lib)
 
 find_package(OpenCV REQUIRED)
+include_directories(${OpenCV_INCLUDE_DIRS})
 find_package(TBB)
 
 add_subdirectory(pybind11)
