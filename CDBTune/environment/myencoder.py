@@ -11,7 +11,7 @@ class MyEncoder(object):
         self.steps = 0
         self.score = 0.0
         self.terminate = False
-        self.last_external_metrics = None
+        self.last_external_metrics = []
         self.default_externam_metrics = None
         self.num_metric = 0
         
@@ -21,6 +21,7 @@ class MyEncoder(object):
         
     def _get_internal_metrics(self):
         
+        
     def eval(self, knob):
         
     def step(self, knob):
@@ -28,6 +29,7 @@ class MyEncoder(object):
     def _get_state(self, knob):
         
     def _apply_knobs(self, knob):
+        self.encoder.config(knob)
     
     def initialize(self):
         """Initialize the encoder instance environment

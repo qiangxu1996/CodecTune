@@ -4,12 +4,19 @@
 #include <tbb/concurrent_queue.h>
 extern "C" {
 #include <x265.h>
+}
 
 #include <pybind11/pybind11.h>
 #include <vector>
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
 #include <chrono>
+#include <pybind11/operators.h>
+
+using std::string;
+using cv::Mat;
+
+namespace py = pybind11;
 
 class Encoder {
 public:
@@ -54,7 +61,7 @@ public:
         x265_param_free(param);
     }
 
-    void operator()() {
+    void run() {
         encoder = x265_encoder_open(param);
         auto pic_out = new_pic();
         while (true) {
@@ -71,6 +78,7 @@ public:
                 break;
             }
             x265_encoder_encode(encoder, &pp_nal, &pi_nal, pic, pic_out);
+            
             delete[] static_cast<Mat *>(pic->userData);
             free_pics.push(pic);
         }
@@ -102,10 +110,10 @@ private:
 x265_picture * Encoder::STOP = reinterpret_cast<x265_picture *>(1);
 
 PYBIND11_MODULE(example, m){
-    m.doc() = "This is the module docs. Go CodecTune!"
+    m.doc() = "This is the module docs. Go CodecTune!";
     py::class_<Encoder>(m, "Encoder")
-        .def(py::init<>(int, int, double))
-        .def("operator", &Encoder::operator)
+        .def(py::init<int, int, double>())
+        .def("run", &Encoder::run)
         .def("config", &Encoder::config)
         ;
 }
