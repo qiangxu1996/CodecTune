@@ -1,3 +1,4 @@
+#include <iostream>
 #include <fstream>
 #include <thread>
 #include <opencv2/videoio.hpp>
@@ -12,7 +13,6 @@ extern "C" {
 #include <pybind11/numpy.h>
 #include <chrono>
 #include <pybind11/operators.h>
-
 using std::string;
 using cv::Mat;
 
@@ -61,7 +61,7 @@ public:
         x265_param_free(param);
     }
 
-    void run() {
+    void operator()() {
         encoder = x265_encoder_open(param);
         auto pic_out = new_pic();
         while (true) {
@@ -93,6 +93,11 @@ public:
         if (encoder)
             x265_encoder_reconfig(encoder, param);
     }
+    
+    bool test_pybind(int i, int j){
+        std::cout<<"C++ Sum: "<<i+j;
+        return true;
+    }
 
 private:
     const int QUEUE_SIZE = 24;
@@ -109,11 +114,11 @@ private:
 
 x265_picture * Encoder::STOP = reinterpret_cast<x265_picture *>(1);
 
-PYBIND11_MODULE(example, m){
+PYBIND11_MODULE(encoder_tune, m){
     m.doc() = "This is the module docs. Go CodecTune!";
     py::class_<Encoder>(m, "Encoder")
         .def(py::init<int, int, double>())
-        .def("run", &Encoder::run)
+        .def("test_pybind", &Encoder::test_pybind)
         .def("config", &Encoder::config)
         ;
 }
