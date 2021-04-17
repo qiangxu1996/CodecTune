@@ -12,3 +12,4 @@ find_package(TBB)
 
 add_subdirectory(pybind11)
 pybind11_add_module(encoder_tune encoder_tune.cpp)
+target_link_libraries(encoder_tune PRIVATE ${OpenCV_LIBS} TBB::tbb x265 pthread)
