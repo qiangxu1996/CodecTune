@@ -13,14 +13,19 @@ extern "C" {
 #include <pybind11/numpy.h>
 #include <chrono>
 #include <pybind11/operators.h>
+#include <list>
 using std::string;
 using cv::Mat;
+
+#define NAME(Variable) (#Variable)
 
 namespace py = pybind11;
 
 class Encoder {
 public:
     static x265_picture *STOP;
+    uint32_t num_nal;
+    x265_picture *output;
 
     using Config = std::vector<std::pair<string, string>>;
     using PicQueue = tbb::concurrent_bounded_queue<x265_picture *>;
@@ -61,7 +66,7 @@ public:
         x265_param_free(param);
     }
 
-    void operator()() {
+    void run() {
         encoder = x265_encoder_open(param);
         auto pic_out = new_pic();
         while (true) {
@@ -78,6 +83,8 @@ public:
                 break;
             }
             x265_encoder_encode(encoder, &pp_nal, &pi_nal, pic, pic_out);
+            num_nal = pi_nal; 
+            output = pic_out;
             
             delete[] static_cast<Mat *>(pic->userData);
             free_pics.push(pic);
@@ -97,6 +104,23 @@ public:
     bool test_pybind(int i, int j){
         std::cout<<"C++ Sum: "<<i+j;
         return true;
+    }
+
+    uint32_t get_num_nal(){
+        return num_nal;
+    }
+
+    std::vector<double> get_frame_data(){
+        // if (num_nal <= 0){
+        //     return "INVALID_FRAME_DATA";
+        // }
+        std::vector<double> value;
+        value.push_back(output->frameData.qp);
+        // value.push_back(output.frameData.rateFactor);
+        // value.push_back(output.frameData.psnrY);
+        // value.push_back(output.frameData.psnrU);
+
+    return value;
     }
 
 private:
@@ -120,5 +144,8 @@ PYBIND11_MODULE(encoder_tune, m){
         .def(py::init<int, int, double>())
         .def("test_pybind", &Encoder::test_pybind)
         .def("config", &Encoder::config)
+        .def("run", &Encoder::run)
+        .def_property_readonly("num_nal", &Encoder::get_num_nal)
+        .def("get_frame_data", &Encoder::get_frame_data)
         ;
 }

@@ -16,8 +16,13 @@ class MyEncoder(object):
         self.num_metric = 0
         
         self.encoder = Encoder(width, height, fps)
+        # create a new thread to push frames
+        # c++ main w/o l116
     
     def _get_external_metrics(self):
+        # encoder 
+        # run() (operator()())
+        # extract statistics
         
     def _get_internal_metrics(self):
         
