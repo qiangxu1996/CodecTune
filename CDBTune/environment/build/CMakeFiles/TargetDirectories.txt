@@ -1,5 +1,0 @@
-/mnt/c/Users/Billy/Desktop/2021 Spring/ECE595-SE/github_Yiming_branch/CodecTune/CDBTune/environment/build/CMakeFiles/rebuild_cache.dir
-/mnt/c/Users/Billy/Desktop/2021 Spring/ECE595-SE/github_Yiming_branch/CodecTune/CDBTune/environment/build/CMakeFiles/encoder_tune.dir
-/mnt/c/Users/Billy/Desktop/2021 Spring/ECE595-SE/github_Yiming_branch/CodecTune/CDBTune/environment/build/CMakeFiles/edit_cache.dir
-/mnt/c/Users/Billy/Desktop/2021 Spring/ECE595-SE/github_Yiming_branch/CodecTune/CDBTune/environment/build/pybind11/CMakeFiles/rebuild_cache.dir
-/mnt/c/Users/Billy/Desktop/2021 Spring/ECE595-SE/github_Yiming_branch/CodecTune/CDBTune/environment/build/pybind11/CMakeFiles/edit_cache.dir
