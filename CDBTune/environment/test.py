@@ -26,12 +26,10 @@ def main():
     height = args.height
     fps = args.fps
     
-    vid = cv.VideoCapture(video)
-    
     encoder = Encoder(width, height, fps)
     t1 = threading.Thread(encoder.run())
     
-    add_frame(encoder, vid)
+    add_frame(encoder, video)
     t1.join()
     cleanup()
 

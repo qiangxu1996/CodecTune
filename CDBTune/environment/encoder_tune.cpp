@@ -110,10 +110,6 @@ public:
         return num_nal;
     }
 
-    static x265_picture get_stop(){
-        return STOP;
-    };
-
     std::vector<double> get_frame_data(){
         // if (num_nal <= 0){
         //     return "INVALID_FRAME_DATA";
@@ -140,7 +136,8 @@ private:
     }
 };
 
-void add_frame(Encodoer encoder, cv::VideoCapture video){
+void add_frame(Encoder encoder, string vid_name){
+    cv::VideoCapture video(vid_name);
     Mat frame;
     while (true) {
         video >> frame;
@@ -176,7 +173,6 @@ PYBIND11_MODULE(encoder_tune, m){
         .def("config", &Encoder::config)
         .def("run", &Encoder::run)
         .def_property_readonly("num_nal", &Encoder::get_num_nal)
-        .def_property_readonly("STOP", &Encoder::get_stop)
         .def("get_frame_data", &Encoder::get_frame_data)
         ;
     m.def("add_frame", &add_frame);
