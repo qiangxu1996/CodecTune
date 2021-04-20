@@ -110,6 +110,10 @@ public:
         return num_nal;
     }
 
+    static x265_picture get_stop(){
+        return STOP;
+    };
+
     std::vector<double> get_frame_data(){
         // if (num_nal <= 0){
         //     return "INVALID_FRAME_DATA";
@@ -136,6 +140,32 @@ private:
     }
 };
 
+void add_frame(Encodoer encoder, cv::VideoCapture video){
+    Mat frame;
+    while (true) {
+        video >> frame;
+        if (frame.empty()) {
+            encoder.loaded_pics.push(Encoder::STOP);
+            break;
+        }
+        auto ch = new Mat[3];
+        cv::split(frame, ch);
+        x265_picture *pic;
+        encoder.free_pics.pop(pic);
+        pic->userData = ch;
+        pic->planes[0] = ch[0].data;
+        pic->planes[1] = ch[1].data;
+        pic->planes[2] = ch[2].data;
+        encoder.loaded_pics.push(pic);
+    }
+    return;
+}
+
+void cleanup(){
+    x265_cleanup();
+    return;
+}
+
 x265_picture * Encoder::STOP = reinterpret_cast<x265_picture *>(1);
 
 PYBIND11_MODULE(encoder_tune, m){
@@ -146,6 +176,9 @@ PYBIND11_MODULE(encoder_tune, m){
         .def("config", &Encoder::config)
         .def("run", &Encoder::run)
         .def_property_readonly("num_nal", &Encoder::get_num_nal)
+        .def_property_readonly("STOP", &Encoder::get_stop)
         .def("get_frame_data", &Encoder::get_frame_data)
         ;
+    m.def("add_frame", &add_frame);
+    m.def("cleanup", &cleanup);
 }
