@@ -3,6 +3,7 @@ from encoder_tune import *
 import argparse
 import threading
 import cv2 as cv
+import pdb
 
 def get_args():
     parser = argparse.ArgumentParser(description="train noise2noise model",
@@ -26,12 +27,24 @@ def main():
     height = args.height
     fps = args.fps
     
-    encoder = Encoder(width, height, fps)
-    t1 = threading.Thread(encoder.run())
+    #encoder = Encoder(width, height, fps)
+    #encoder_thread(encoder)
+    #encoder_thread(width, height, fps, video)
     
-    add_frame(encoder, video)
-    t1.join()
-    cleanup()
+    #add_frame(encoder, video)
+    #cleanup()
+    ##
+    
+    encoder_create(width, height, fps)
+    #load_video(video)
+    pdb.set_trace()
+    push_frame_thread(video)
+    encoder_run();
+    qp = get_qp();
+    cleanup();
+    
+    print(qp, 'lets gooooooooooo')
+    
 
 if __name__ == '__main__':
     main()

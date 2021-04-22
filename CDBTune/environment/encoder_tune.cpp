@@ -19,13 +19,14 @@ using cv::Mat;
 
 #define NAME(Variable) (#Variable)
 
+//cv::VideoCapture *video;
+
 namespace py = pybind11;
 
 class Encoder {
 public:
     static x265_picture *STOP;
-    uint32_t num_nal;
-    x265_picture *output;
+    double frame_qp;
 
     using Config = std::vector<std::pair<string, string>>;
     using PicQueue = tbb::concurrent_bounded_queue<x265_picture *>;
@@ -52,6 +53,7 @@ public:
             pic->stride[2] = width;
             free_pics.push(pic);
         }
+        encoder = x265_encoder_open(param);
     }
 
     ~Encoder() {
@@ -64,11 +66,15 @@ public:
             x265_picture_free(pic);
         }
         x265_param_free(param);
+        x265_encoder_close(encoder);
     }
 
-    void run() {
-        encoder = x265_encoder_open(param);
+    void operator()() {
+        //encoder = x265_encoder_open(param);
         auto pic_out = new_pic();
+
+        int count = 0;
+        x265_frame_stats *stats; 
         while (true) {
             x265_picture *pic;
             x265_nal *pp_nal;
@@ -82,16 +88,23 @@ public:
                 } while (ret > 0);
                 break;
             }
+
             x265_encoder_encode(encoder, &pp_nal, &pi_nal, pic, pic_out);
-            num_nal = pi_nal; 
-            output = pic_out;
+            if (pi_nal > 0){
+                count++;
+            }
+            if (count==30){
+                *stats = pic_out->frameData;
+                frame_qp = stats->qp;
+                break;
+            }
             
             delete[] static_cast<Mat *>(pic->userData);
             free_pics.push(pic);
         }
         x265_picture_free(pic_out);
-        x265_encoder_close(encoder);
-        encoder = nullptr;
+        //x265_encoder_close(encoder);
+        //encoder = nullptr;
     }
 
     void config(Config &config) {
@@ -104,23 +117,6 @@ public:
     bool test_pybind(int i, int j){
         std::cout<<"C++ Sum: "<<i+j;
         return true;
-    }
-
-    uint32_t get_num_nal(){
-        return num_nal;
-    }
-
-    std::vector<double> get_frame_data(){
-        // if (num_nal <= 0){
-        //     return "INVALID_FRAME_DATA";
-        // }
-        std::vector<double> value;
-        value.push_back(output->frameData.qp);
-        // value.push_back(output.frameData.rateFactor);
-        // value.push_back(output.frameData.psnrY);
-        // value.push_back(output.frameData.psnrU);
-
-    return value;
     }
 
 private:
@@ -136,25 +132,14 @@ private:
     }
 };
 
-void add_frame(Encoder encoder, string vid_name){
-    cv::VideoCapture video(vid_name);
-    Mat frame;
-    while (true) {
-        video >> frame;
-        if (frame.empty()) {
-            encoder.loaded_pics.push(Encoder::STOP);
-            break;
-        }
-        auto ch = new Mat[3];
-        cv::split(frame, ch);
-        x265_picture *pic;
-        encoder.free_pics.pop(pic);
-        pic->userData = ch;
-        pic->planes[0] = ch[0].data;
-        pic->planes[1] = ch[1].data;
-        pic->planes[2] = ch[2].data;
-        encoder.loaded_pics.push(pic);
-    }
+Encoder* encoder;
+
+double get_qp(){
+    return encoder->frame_qp;
+}
+
+void encoder_run(){
+    (*encoder)();
     return;
 }
 
@@ -162,6 +147,52 @@ void cleanup(){
     x265_cleanup();
     return;
 }
+
+void push_frame(string vid_name){
+    //std::cout<<"push_frame\n";
+    //std::cout<<vid_name+"\n";
+    cv::VideoCapture video(vid_name);
+    //std::cout<<"videocapture\n";
+    Mat frame;
+    std::cout<<"Mat frame\n";
+    while (true) {
+        video >> frame;
+        if (frame.empty()) {
+            encoder->loaded_pics.push(Encoder::STOP);
+            break;
+        }
+        auto ch = new Mat[3];
+        cv::split(frame, ch);
+        x265_picture *pic;
+        encoder->free_pics.pop(pic);
+        pic->userData = ch;
+        pic->planes[0] = ch[0].data;
+        pic->planes[1] = ch[1].data;
+        pic->planes[2] = ch[2].data;
+        encoder->loaded_pics.push(pic);
+        std::cout<<frame.empty()<<"\n";
+        
+    }
+    std::cout<<"while\n";
+    return;
+}
+
+void push_frame_thread(string vid_name){
+    std::cout<<"push_frame_thread\n";
+    std::thread encoder_thread(push_frame, vid_name);
+    encoder_thread.join();
+    return;
+}
+
+void encoder_create(int width, int height, double fps){
+    encoder = new Encoder(width, height, fps);
+    return;
+}
+
+// void load_video(string vid_name){
+//     video = new cv::VideoCapture(vid_name);
+//     return;
+// }
 
 x265_picture * Encoder::STOP = reinterpret_cast<x265_picture *>(1);
 
@@ -171,10 +202,11 @@ PYBIND11_MODULE(encoder_tune, m){
         .def(py::init<int, int, double>())
         .def("test_pybind", &Encoder::test_pybind)
         .def("config", &Encoder::config)
-        .def("run", &Encoder::run)
-        .def_property_readonly("num_nal", &Encoder::get_num_nal)
-        .def("get_frame_data", &Encoder::get_frame_data)
         ;
-    m.def("add_frame", &add_frame);
+    m.def("encoder_create", &encoder_create);
+    m.def("push_frame_thread", &push_frame_thread);
     m.def("cleanup", &cleanup);
+    m.def("encoder_run", &encoder_run);
+    m.def("get_qp", &get_qp);
+    //m.def("load_video", &load_video);
 }
