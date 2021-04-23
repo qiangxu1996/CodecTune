@@ -26,7 +26,7 @@ namespace py = pybind11;
 class Encoder {
 public:
     static x265_picture *STOP;
-    double frame_qp;
+    double frame_qp = -3;
 
     using Config = std::vector<std::pair<string, string>>;
     using PicQueue = tbb::concurrent_bounded_queue<x265_picture *>;
@@ -57,52 +57,63 @@ public:
     }
 
     ~Encoder() {
+        std::cout<<"before anything";
         x265_picture *pic;
+        std::cout<<"before while 1";
         while (free_pics.try_pop(pic)) {
             x265_picture_free(pic);
         }
+        std::cout<<"before while 2";
         while (loaded_pics.try_pop(pic)) {
             delete[] static_cast<Mat *>(pic->userData);
             x265_picture_free(pic);
         }
+        std::cout<<"before param_free";
         x265_param_free(param);
+        std::cout<<"before encoder_close";
         x265_encoder_close(encoder);
+        std::cout<<"destructor done";
     }
 
     void operator()() {
         //encoder = x265_encoder_open(param);
+        std::cout<<"im in operator\n";
+        fprintf(stderr,"im in operator\n");
         auto pic_out = new_pic();
 
         int count = 0;
-        x265_frame_stats *stats; 
+        //x265_frame_stats *stats; 
         while (true) {
+            //std::cout<<"loop iterate\n";
             x265_picture *pic;
             x265_nal *pp_nal;
             uint32_t pi_nal;
 
             loaded_pics.pop(pic);
-            if (pic == STOP) {
-                int ret;
-                do {
-                    ret = x265_encoder_encode(encoder, &pp_nal, &pi_nal, nullptr, pic_out);
-                } while (ret > 0);
-                break;
-            }
+            // if (pic == STOP) {
+            //     int ret;
+            //     do {
+            //         ret = x265_encoder_encode(encoder, &pp_nal, &pi_nal, nullptr, pic_out);
+            //     } while (ret > 0);
+            //     break;
+            // }
 
             x265_encoder_encode(encoder, &pp_nal, &pi_nal, pic, pic_out);
             if (pi_nal > 0){
                 count++;
             }
             if (count==30){
-                *stats = pic_out->frameData;
-                frame_qp = stats->qp;
+                //*stats = pic_out->frameData;
+                frame_qp = ((x265_frame_stats)(pic_out->frameData)).qp;
                 break;
             }
-            
+
             delete[] static_cast<Mat *>(pic->userData);
             free_pics.push(pic);
         }
+        std::cout<<"before x265_picture_free\n";
         x265_picture_free(pic_out);
+        std::cout<<"after x265_picture_free\n";
         //x265_encoder_close(encoder);
         //encoder = nullptr;
     }
@@ -139,12 +150,18 @@ double get_qp(){
 }
 
 void encoder_run(){
+    std::cout<<"im in encoder_run\n";
+    fprintf(stderr,"im in encoder_run\n");
     (*encoder)();
+    std::cout<<"leaving encoder_run\n";
     return;
 }
 
 void cleanup(){
-    x265_cleanup();
+    std::cout<<encoder<<"\n";
+    encoder->~Encoder();
+    //delete ::encoder;
+    //x265_cleanup();
     return;
 }
 
@@ -157,6 +174,7 @@ void push_frame(string vid_name){
     std::cout<<"Mat frame\n";
     while (true) {
         video >> frame;
+        //std::cout<<frame.empty()<<"\n";
         if (frame.empty()) {
             encoder->loaded_pics.push(Encoder::STOP);
             break;
@@ -170,7 +188,7 @@ void push_frame(string vid_name){
         pic->planes[1] = ch[1].data;
         pic->planes[2] = ch[2].data;
         encoder->loaded_pics.push(pic);
-        std::cout<<frame.empty()<<"\n";
+        
         
     }
     std::cout<<"while\n";
@@ -180,12 +198,15 @@ void push_frame(string vid_name){
 void push_frame_thread(string vid_name){
     std::cout<<"push_frame_thread\n";
     std::thread encoder_thread(push_frame, vid_name);
-    encoder_thread.join();
+    //encoder_thread.join();
+    encoder_thread.detach();
+    std::cout<<"END push_frame_thread\n";
     return;
 }
 
 void encoder_create(int width, int height, double fps){
     encoder = new Encoder(width, height, fps);
+    std::cout<<encoder<<"\n";
     return;
 }
 

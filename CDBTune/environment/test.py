@@ -4,6 +4,7 @@ import argparse
 import threading
 import cv2 as cv
 import pdb
+import faulthandler
 
 def get_args():
     parser = argparse.ArgumentParser(description="train noise2noise model",
@@ -37,13 +38,19 @@ def main():
     
     encoder_create(width, height, fps)
     #load_video(video)
-    pdb.set_trace()
+    #pdb.set_trace()
     push_frame_thread(video)
-    encoder_run();
-    qp = get_qp();
-    cleanup();
+    print("before encoder_run")
+    faulthandler.enable()
+    encoder_run()
+    print("before get_qp")
+    qp = get_qp()
+    print("before cleanup")
+    cleanup()
     
     print(qp, 'lets gooooooooooo')
+    
+    return 0
     
 
 if __name__ == '__main__':
