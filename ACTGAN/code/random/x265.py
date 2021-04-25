@@ -6,13 +6,15 @@ import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from deap import algorithms, base, creator, tools
+
 random.seed(0)
 summary = re.compile(r'encoded \d+ frames in [\d.]+s \(([\d.]+) fps\), [\d.]+ kb/s, Avg QP:[ \d.]+, SSIM Mean Y: ([\d.]+) \([ \d.]+ dB\)')
 driver_path = ''
 
 knobs = [
-    ('ctu', [64, 32, 16]),
-    ('min-cu-size', [32, 16, 8]),
+    ('ctu', [1, 2, 4]),  # [64, 32, 16]
+    ('min-cu-size', [1, 2, 4]),  # [32, 16, 8]
     ('bframes', list(range(9))),  # [0, 16]
     ('b-adapt', [0, 1, 2]),
     ('rc-lookahead', list(range(41))),  # [bframes, 250]
@@ -44,19 +46,32 @@ knobs = [
     ('limit-tu', list(range(5))),
 ]
 
-if __name__ == '__main__':
-    vid_file = sys.argv[1]
-    output_file = Path(vid_file).with_suffix('.csv').name
-    with open(output_file, 'w', newline='') as csvfile, \
-        TemporaryDirectory() as tmpdirname:
-        writer = csv.writer(csvfile)
+def individual(t=list):
+    return t(random.choice(r) for _, r in knobs)
+
+
+class Evaluator:
+    TARGET_FPS = 30
+    FPS_FACTOR = .1
+    REWARD_MIN = -FPS_FACTOR * TARGET_FPS
+
+    def __init__(self, vid_file):
+        self.vid_file = vid_file
+
+        output_file = Path(vid_file).with_suffix('.csv').name
+        self.csvfile = open(output_file, 'w', newline='')
+        self.writer = csv.writer(self.csvfile)
         header = [k for k, _ in knobs]
         header.extend(['fps', 'ssim', 'reward'])
-        writer.writerow(header)
+        self.writer.writerow(header)
+    
+    def __call__(self, config_values):
+        config_values = config_values[:]
+        config_values[0] *= 16
+        config_values[1] *= 8
 
-        i = 0
-        while i < 300:
-            config_values = [random.choice(r) for _, r in knobs]
+        reward = Evaluator.REWARD_MIN
+        with TemporaryDirectory() as tmpdirname:
             config_path = Path(tmpdirname, 'config.txt')
             with open(config_path, 'w', encoding='utf-8') as config_file:
                 for (k, _), v in zip(knobs, config_values):
@@ -64,19 +79,50 @@ if __name__ == '__main__':
 
             try:
                 out = subprocess.run(
-                    [driver_path, vid_file, str(config_path)],
+                    [driver_path, self.vid_file, str(config_path)],
                     capture_output=True, timeout=30, text=True)
             except subprocess.TimeoutExpired:
-                continue
+                return reward,
 
             match = summary.fullmatch(out.stderr.splitlines()[-1])
             if match:
                 fps = float(match.group(1))
                 ssim = float(match.group(2))
                 reward = ssim
-                if fps < 30:
-                    reward -= (30 - fps) / 10
+                if fps < Evaluator.TARGET_FPS:
+                    reward -= Evaluator.FPS_FACTOR * (Evaluator.TARGET_FPS - fps)
                 config_values.extend([fps, ssim, reward])
-                writer.writerow(config_values)
-                i += 1
-                print(i, fps, ssim)
+                self.writer.writerow(config_values)
+                self.csvfile.flush()
+                print(fps, ssim, reward)
+
+        return reward,
+
+
+def rand(eval):
+    i = 0
+    while i < 300:
+        config_values = individual()
+        reward = eval(config_values)[0]
+        if reward > Evaluator.REWARD_MIN:
+            i += 1
+
+def ea(eval):
+    pop_size = 15
+    creator.create('FitnessMax', base.Fitness, weights=(1.0,))
+    creator.create('Individual', list, fitness=creator.FitnessMax)
+    pop = [individual(creator.Individual) for _ in range(pop_size)]
+
+    toolbox = base.Toolbox()
+    toolbox.register('mate', tools.cxTwoPoint)
+    low = [r[0] for _, r in knobs]
+    up = [r[-1] for _, r in knobs]
+    toolbox.register('mutate', tools.mutUniformInt, low=low, up=up, indpb=.1)
+    toolbox.register('select', tools.selTournament, tournsize=3)
+    toolbox.register('evaluate', eval)
+
+    algorithms.eaMuPlusLambda(pop, toolbox, pop_size, 15, .5, .2, 50)
+
+if __name__ == '__main__':
+    eval = Evaluator(sys.argv[1])
+    ea(eval)
