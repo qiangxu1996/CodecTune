@@ -62,7 +62,8 @@ def main():
         #print("Segement FPS is: ", total_time)
         #print("Segement QP is: ", qp)
         stats_dict = dict((key, getattr(stats, key)) for key in dir(stats) if not key.startswith('__'))
-        print(stats_dict)
+        for k,v in stats_dict.iteritems():
+            print key,value,"\n"
     
     #print(qp, 'lets gooooooooooo')
     #print(total_time, '  this is total time')
