@@ -20,8 +20,9 @@ using cv::Mat;
 #define NAME(Variable) (#Variable)
 
 //cv::VideoCapture *video;
-double total_time;
+double encode_fps;
 bool encode_done;
+x265_frame_stats stats; 
 
 namespace py = pybind11;
 
@@ -82,9 +83,8 @@ public:
         std::cout<<"im in operator\n";
         fprintf(stderr,"im in operator\n");
         auto pic_out = new_pic();
-
+        double total_time = 0.0;
         int count = 0;
-        //x265_frame_stats *stats; 
         struct timespec encode_start,encode_end;
         while (true) {
             std::cout<<"loop iterate\n";
@@ -99,7 +99,8 @@ public:
                     ret = x265_encoder_encode(encoder, &pp_nal, &pi_nal, nullptr, pic_out);
                 } while (ret > 0);
                 clock_gettime(CLOCK_MONOTONIC,&encode_end);
-                total_time = encode_end.tv_sec - encode_start.tv_sec + ((encode_end.tv_nsec - encode_start.tv_nsec <0) ? (1000000000-(encode_start.tv_nsec-encode_end.tv_nsec))  : (encode_end.tv_nsec - encode_start.tv_nsec)) / 1000000000;
+                stats = pic_out->frameData;
+                total_time = (encode_end.tv_sec - encode_start.tv_sec) + ((encode_end.tv_nsec - encode_start.tv_nsec <0) ? (1000000000-(encode_start.tv_nsec-encode_end.tv_nsec))  : (encode_end.tv_nsec - encode_start.tv_nsec)) / 1000000000.0;
                 frame_qp = ((x265_frame_stats)(pic_out->frameData)).qp;
                 encode_done = true;
                 break;
@@ -114,9 +115,9 @@ public:
                 std::cout<<"count"<<count<<"\n";
             }
             if (count==30){
-                //*stats = pic_out->frameData;
+                stats = pic_out->frameData;
                 clock_gettime(CLOCK_MONOTONIC,&encode_end);
-                total_time = encode_end.tv_sec - encode_start.tv_sec + ((encode_end.tv_nsec - encode_start.tv_nsec <0) ? (1000000000-(encode_start.tv_nsec-encode_end.tv_nsec))  : (encode_end.tv_nsec - encode_start.tv_nsec)) / 1000000000;
+                total_time = (encode_end.tv_sec - encode_start.tv_sec) + ((encode_end.tv_nsec - encode_start.tv_nsec <0) ? (1000000000-(encode_start.tv_nsec-encode_end.tv_nsec))  : (encode_end.tv_nsec - encode_start.tv_nsec)) / 1000000000.0;
                 frame_qp = ((x265_frame_stats)(pic_out->frameData)).qp;
                 break;
             }
@@ -124,6 +125,7 @@ public:
             delete[] static_cast<Mat *>(pic->userData);
             free_pics.push(pic);
         }
+        encode_fps = (double)count/total_time;
         std::cout<<"before x265_picture_free\n";
         x265_picture_free(pic_out);
         std::cout<<"after x265_picture_free\n";
@@ -169,7 +171,7 @@ double encoder_run(){
     //(*encoder)();
     encoder->run();
     std::cout<<"leaving encoder_run\n";
-    return total_time;
+    return encode_fps;
 }
 
 void cleanup(){
@@ -223,6 +225,13 @@ bool is_encode_done(){
     return encode_done;
 }
 
+x265_frame_stats get_frame_stats() {
+    return stats;
+}
+double get_ssim() {
+    return stats.ssim;
+}
+
 void encoder_create(int width, int height, double fps){
     encoder = new Encoder(width, height, fps);
     encode_done = false;
@@ -244,11 +253,65 @@ PYBIND11_MODULE(encoder_tune, m){
         .def("test_pybind", &Encoder::test_pybind)
         .def("config", &Encoder::config)
         ;
+     py::class_<x265_frame_stats>(m, "x265_frame_stats")
+        .def_readonly("ssim", &get_ssim);
+
+
+    // PYBIND11_NUMPY_DTYPE(x265_frame_stats,                qp,
+                // rateFactor,
+                // psnrY,
+                // psnrU,
+                // psnrV,
+                // psnr,
+                // ssim,
+                // decideWaitTime,
+                // row0WaitTime,
+                // wallTime,
+                // refWaitWallTime,
+                // totalCTUTime,
+                // stallTime,
+                // avgWPP,
+                // avgLumaDistortion,
+                // avgChromaDistortion,
+                // avgPsyEnergy,
+                // avgResEnergy,
+                // avgLumaLevel,
+                // bufferFill,
+              // bits,
+                   // encoderOrder,
+                   // poc,
+                   // countRowBlocks,
+                   // list0POC,
+                   // list1POC,
+              // maxLumaLevel,
+              // minLumaLevel,
+
+              // maxChromaULevel,
+              // minChromaULevel,
+                // avgChromaULevel,
+
+
+              // maxChromaVLevel,
+              // minChromaVLevel,
+                // avgChromaVLevel,
+
+                  // sliceType,
+                   // bScenecut,
+                // ipCostRatio,
+                   // frameLatency,
+        // cuStats,
+        // puStats,
+                // totalFrameTime,
+                // vmafFrameScore,
+                // bufferFillFinal,
+                // unclippedBufferFillFinal);
+        
     m.def("encoder_create", &encoder_create);
     m.def("push_frame_thread", &push_frame_thread);
     m.def("cleanup", &cleanup);
     m.def("encoder_run", &encoder_run);
     m.def("get_qp", &get_qp);
     m.def("is_encode_done", &is_encode_done);
+    m.def("get_frame_stats", &get_frame_stats);
     //m.def("load_video", &load_video);
 }

@@ -1,8 +1,8 @@
-import numpy as np
+#import numpy as np
 from encoder_tune import *
 import argparse
 import threading
-import cv2 as cv
+#import cv2 as cv
 import pdb
 import faulthandler
 
@@ -54,9 +54,13 @@ def main():
     
     while(is_encode_done() == False):
         total_time = float(encoder_run())
+        print(get_frame_stats())
+        stats = get_frame_stats()
+        print(stats.__dict__)
+        print("Segment SSIM is: ",str(stats))
         qp = float(get_qp())
-        print("total_time 1", total_time)
-        print("get_qp 1", qp)
+        print("Segement FPS is: ", total_time)
+        print("Segement QP is: ", qp)
     
     #print(qp, 'lets gooooooooooo')
     #print(total_time, '  this is total time') 
