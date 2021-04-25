@@ -228,9 +228,10 @@ bool is_encode_done(){
 x265_frame_stats get_frame_stats() {
     return stats;
 }
-double get_ssim() {
-    return stats.ssim;
-}
+
+// double get_ssim() {
+//     return stats.ssim;
+// }
 
 void encoder_create(int width, int height, double fps){
     encoder = new Encoder(width, height, fps);
@@ -253,9 +254,11 @@ PYBIND11_MODULE(encoder_tune, m){
         .def("test_pybind", &Encoder::test_pybind)
         .def("config", &Encoder::config)
         ;
-     py::class_<x265_frame_stats>(m, "x265_frame_stats")
-        .def_readonly("ssim", &get_ssim);
+    // py::class_<x265_frame_stats>(m, "x265_frame_stats")
+    //     .def_readonly("ssim", &get_ssim);
 
+    py::class_<x265_frame_stats>(m, "x265_frame_stats")
+        .def_readonly("ssim", &x265_frame_stats::ssim);
 
     // PYBIND11_NUMPY_DTYPE(x265_frame_stats,                qp,
                 // rateFactor,
