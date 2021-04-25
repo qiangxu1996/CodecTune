@@ -41,14 +41,25 @@ def main():
     #pdb.set_trace()
     push_frame_thread(video)
     print("before encoder_run")
-    faulthandler.enable()
-    encoder_run()
-    print("before get_qp")
-    qp = get_qp()
-    print("before cleanup")
-    cleanup()
+    #faulthandler.enable()
+    # total_time = float(encoder_run())
+    # qp = float(get_qp())
+    # print("total_time 1", total_time)
+    # print("get_qp 1", qp)
+    # total_time = float(encoder_run())
+    # qp = float(get_qp())
+    # print("total_time 2", total_time)
+    # print("get_qp 2", qp)
+    #cleanup() #DEBUG
     
-    print(qp, 'lets gooooooooooo')
+    while(is_encode_done() == False):
+        total_time = float(encoder_run())
+        qp = float(get_qp())
+        print("total_time 1", total_time)
+        print("get_qp 1", qp)
+    
+    #print(qp, 'lets gooooooooooo')
+    #print(total_time, '  this is total time') 
     
     return 0
     

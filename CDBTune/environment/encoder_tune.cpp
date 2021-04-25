@@ -20,6 +20,8 @@ using cv::Mat;
 #define NAME(Variable) (#Variable)
 
 //cv::VideoCapture *video;
+double total_time;
+bool encode_done;
 
 namespace py = pybind11;
 
@@ -75,7 +77,7 @@ public:
         std::cout<<"destructor done";
     }
 
-    void operator()() {
+    void run() {
         //encoder = x265_encoder_open(param);
         std::cout<<"im in operator\n";
         fprintf(stderr,"im in operator\n");
@@ -83,27 +85,38 @@ public:
 
         int count = 0;
         //x265_frame_stats *stats; 
+        struct timespec encode_start,encode_end;
         while (true) {
-            //std::cout<<"loop iterate\n";
+            std::cout<<"loop iterate\n";
             x265_picture *pic;
             x265_nal *pp_nal;
             uint32_t pi_nal;
 
             loaded_pics.pop(pic);
-            // if (pic == STOP) {
-            //     int ret;
-            //     do {
-            //         ret = x265_encoder_encode(encoder, &pp_nal, &pi_nal, nullptr, pic_out);
-            //     } while (ret > 0);
-            //     break;
-            // }
+            if (pic == STOP) {
+                int ret;
+                do {
+                    ret = x265_encoder_encode(encoder, &pp_nal, &pi_nal, nullptr, pic_out);
+                } while (ret > 0);
+                clock_gettime(CLOCK_MONOTONIC,&encode_end);
+                total_time = encode_end.tv_sec - encode_start.tv_sec + ((encode_end.tv_nsec - encode_start.tv_nsec <0) ? (1000000000-(encode_start.tv_nsec-encode_end.tv_nsec))  : (encode_end.tv_nsec - encode_start.tv_nsec)) / 1000000000;
+                frame_qp = ((x265_frame_stats)(pic_out->frameData)).qp;
+                encode_done = true;
+                break;
+            }
 
             x265_encoder_encode(encoder, &pp_nal, &pi_nal, pic, pic_out);
             if (pi_nal > 0){
+                if (count == 0){
+                    clock_gettime(CLOCK_MONOTONIC,&encode_start);
+                }
                 count++;
+                std::cout<<"count"<<count<<"\n";
             }
             if (count==30){
                 //*stats = pic_out->frameData;
+                clock_gettime(CLOCK_MONOTONIC,&encode_end);
+                total_time = encode_end.tv_sec - encode_start.tv_sec + ((encode_end.tv_nsec - encode_start.tv_nsec <0) ? (1000000000-(encode_start.tv_nsec-encode_end.tv_nsec))  : (encode_end.tv_nsec - encode_start.tv_nsec)) / 1000000000;
                 frame_qp = ((x265_frame_stats)(pic_out->frameData)).qp;
                 break;
             }
@@ -116,6 +129,7 @@ public:
         std::cout<<"after x265_picture_free\n";
         //x265_encoder_close(encoder);
         //encoder = nullptr;
+
     }
 
     void config(Config &config) {
@@ -149,12 +163,13 @@ double get_qp(){
     return encoder->frame_qp;
 }
 
-void encoder_run(){
+double encoder_run(){
     std::cout<<"im in encoder_run\n";
     fprintf(stderr,"im in encoder_run\n");
-    (*encoder)();
+    //(*encoder)();
+    encoder->run();
     std::cout<<"leaving encoder_run\n";
-    return;
+    return total_time;
 }
 
 void cleanup(){
@@ -204,8 +219,13 @@ void push_frame_thread(string vid_name){
     return;
 }
 
+bool is_encode_done(){
+    return encode_done;
+}
+
 void encoder_create(int width, int height, double fps){
     encoder = new Encoder(width, height, fps);
+    encode_done = false;
     std::cout<<encoder<<"\n";
     return;
 }
@@ -229,5 +249,6 @@ PYBIND11_MODULE(encoder_tune, m){
     m.def("cleanup", &cleanup);
     m.def("encoder_run", &encoder_run);
     m.def("get_qp", &get_qp);
+    m.def("is_encode_done", &is_encode_done);
     //m.def("load_video", &load_video);
 }
