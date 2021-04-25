@@ -57,16 +57,18 @@ def main():
         print(get_frame_stats())
         stats = get_frame_stats()
         #print(stats.__dict__)
-        print("Segment SSIM is: ",stats.ssim)
-        qp = float(get_qp())
-        print("Segement FPS is: ", total_time)
-        print("Segement QP is: ", qp)
+        #print("Segment SSIM is: ",stats.ssim)
+        #qp = float(get_qp())
+        #print("Segement FPS is: ", total_time)
+        #print("Segement QP is: ", qp)
+        stats_dict = dict((key, getattr(stats, key)) for key in dir(stats) if not key.startswith('__'))
+        print(stats_dict)
     
     #print(qp, 'lets gooooooooooo')
-    #print(total_time, '  this is total time') 
-    
+    #print(total_time, '  this is total time')
     return 0
     
 
 if __name__ == '__main__':
     main()
+

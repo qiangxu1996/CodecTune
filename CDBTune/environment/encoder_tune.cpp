@@ -258,7 +258,52 @@ PYBIND11_MODULE(encoder_tune, m){
     //     .def_readonly("ssim", &get_ssim);
 
     py::class_<x265_frame_stats>(m, "x265_frame_stats")
-        .def_readonly("ssim", &x265_frame_stats::ssim);
+        .def_readonly("qp", &x265_frame_stats::qp)
+        .def_readonly("rateFactor", &x265_frame_stats::rateFactor)
+        .def_readonly("psnrY", &x265_frame_stats::psnrY)
+        .def_readonly("psnrU", &x265_frame_stats::psnrU)
+        .def_readonly("psnrV", &x265_frame_stats::psnrV)
+        .def_readonly("psnr", &x265_frame_stats::psnr)  
+        .def_readonly("ssim", &x265_frame_stats::ssim)
+        .def_readonly("decideWaitTime", &x265_frame_stats::decideWaitTime)
+        .def_readonly("row0WaitTime", &x265_frame_stats::row0WaitTime)
+        .def_readonly("wallTime", &x265_frame_stats::wallTime)
+        .def_readonly("refWaitWallTime", &x265_frame_stats::refWaitWallTime)
+        .def_readonly("totalCTUTime", &x265_frame_stats::totalCTUTime)   
+        .def_readonly("stallTime", &x265_frame_stats::stallTime)  
+        .def_readonly("avgWPP", &x265_frame_stats::avgWPP)  
+        .def_readonly("avgLumaDistortion", &x265_frame_stats::avgLumaDistortion)   
+        .def_readonly("avgChromaDistortion", &x265_frame_stats::avgChromaDistortion)  
+        .def_readonly("avgPsyEnergy", &x265_frame_stats::avgPsyEnergy)
+        .def_readonly("avgResEnergy", &x265_frame_stats::avgResEnergy)   
+        .def_readonly("avgLumaLevel", &x265_frame_stats::avgLumaLevel)  
+        .def_readonly("bufferFill", &x265_frame_stats::bufferFill)  
+        .def_readonly("bits", &x265_frame_stats::bits)   
+        .def_readonly("encoderOrder", &x265_frame_stats::encoderOrder)  
+        .def_readonly("poc", &x265_frame_stats::poc)    
+        .def_readonly("countRowBlocks", &x265_frame_stats::countRowBlocks)   
+        .def_readonly("list0POC", &x265_frame_stats::list0POC)  
+        .def_readonly("list1POC", &x265_frame_stats::list1POC)  
+        .def_readonly("maxLumaLevel", &x265_frame_stats::maxLumaLevel)   
+        .def_readonly("minLumaLevel", &x265_frame_stats::minLumaLevel)  
+        .def_readonly("maxChromaULevel", &x265_frame_stats::maxChromaULevel)
+        .def_readonly("minChromaULevel", &x265_frame_stats::minChromaULevel)   
+        .def_readonly("avgChromaULevel", &x265_frame_stats::avgChromaULevel)  
+        .def_readonly("maxChromaVLevel", &x265_frame_stats::maxChromaVLevel)  
+        .def_readonly("minChromaVLevel", &x265_frame_stats::minChromaVLevel)   
+        .def_readonly("avgChromaVLevel", &x265_frame_stats::avgChromaVLevel)  
+        .def_readonly("sliceType", &x265_frame_stats::sliceType) 
+        .def_readonly("bScenecut", &x265_frame_stats::bScenecut)   
+        .def_readonly("ipCostRatio", &x265_frame_stats::ipCostRatio)  
+        .def_readonly("frameLatency", &x265_frame_stats::frameLatency)    
+        //.def_readonly("cuStats", &x265_frame_stats::cuStats)   
+        //.def_readonly("puStats", &x265_frame_stats::listpuStats0POC)  //This gave an error ‘listpuStats0POC’ is not a member of ‘x265_frame_stats’
+        .def_readonly("totalFrameTime", &x265_frame_stats::totalFrameTime)  
+        .def_readonly("vmafFrameScore", &x265_frame_stats::vmafFrameScore)   
+        .def_readonly("bufferFillFinal", &x265_frame_stats::bufferFillFinal)  
+        .def_readonly("unclippedBufferFillFinal", &x265_frame_stats::unclippedBufferFillFinal);
+
+
 
     // PYBIND11_NUMPY_DTYPE(x265_frame_stats,                qp,
                 // rateFactor,
@@ -307,7 +352,7 @@ PYBIND11_MODULE(encoder_tune, m){
                 // totalFrameTime,
                 // vmafFrameScore,
                 // bufferFillFinal,
-                // unclippedBufferFillFinal);
+                // unclippedBufferFillFinal)
         
     m.def("encoder_create", &encoder_create);
     m.def("push_frame_thread", &push_frame_thread);
