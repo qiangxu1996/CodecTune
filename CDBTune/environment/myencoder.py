@@ -1,5 +1,9 @@
 import numpy as np
 from encoder_tune import *
+import os
+import knobs
+
+BEST_NOW = ""
 
 class MyEncoder(object):
     def __init__(self, video, width, height, fps):
@@ -45,11 +49,68 @@ class MyEncoder(object):
         #{ssim,encode_fps}
         
         
+    def _get_best_now(self, filename):
+        with open(BEST_NOW  + filename) as f:
+            lines = f.readlines()
+        best_now = lines[0].split(',')
+        return [float(best_now[0]), float(best_now[1])]
+    
+    
+    def record_best(self, external_metrics):
+        filename = 'bestnow.log'
+        best_flag = False
+        if os.path.exists( BEST_NOW  + filename):
+            ssim_best = external_metrics[0]
+            fps_best = external_metrics[1]
+
+            with open(BEST_NOW  + filename) as f:
+                lines = f.readlines()
+            best_now = lines[0].split(',')
+            ssim_best_now = float(best_now[0])
+            fps_best_now = float(best_now[1])
+            if ssim_best > ssim_best_now or fps_best > fps_best_now:
+                best_flag = True
+                with open(BEST_NOW  + filename, 'w') as f:
+                    f.write(str(ssim_best) + ',' + str(fps_best))
+        else:
+            file = open(BEST_NOW  + filename, 'wr')
+            ssim_best = external_metrics[0]
+            fps_best = external_metrics[1]
+
+            file.write(str(ssim_best) + ',' + str(fps_best))
+        return best_flag
+        
         
     def step(self, knob):
         #apply_knobs
         #Yiming?
+        filename = 'bestnow.log'
+        flag = self._apply_knobs(knob)
+        if not flag:
+            return -10000000.0, np.array([0] * self.num_metric), True, self.score - 10000000, [0, 0, 0]
+        s = self._get_state(knob)
+        if s is None:
+            return -10000000.0, np.array([0] * self.num_metric), True, self.score - 10000000, [0, 0, 0]
+        external_metrics, internal_metrics = s
         
+        reward = self._get_reward(external_metrics)
+        flag = self.record_best(external_metrics)
+        if flag == True:
+            print('Better performance changed!')
+        else:
+            print('Performance remained!')
+        
+        best_now_performance = self._get_best_now(filename)
+        self.last_external_metrics = best_now_performance
+        
+        next_state = internal_metrics
+        terminate = self._terminate()
+        knobs.save_knobs(
+            knob=knob,
+            metrics=external_metrics,
+            knob_file='knob_metric.txt'
+        )
+        return reward, next_state, terminate, self.score, external_metrics
         
         
     def _get_state(self, knob):
@@ -61,7 +122,9 @@ class MyEncoder(object):
         """ Apply Knobs to the instance
         """
         #Yiming <"thread_pools","32">
-        self.encoder.config(knob)
+        return config(knob)
+        
+        
     
     def initialize(self):
         """Initialize the encoder instance environment
