@@ -1,0 +1,11 @@
+#!/bin/sh -l
+# FILENAME: codecDriverSlurmScript
+
+#LOAD ANY MODULES
+#module load ffmpeg
+
+# Change to the directory from which you originally submitted this job.
+cd $SLURM_SUBMIT_DIR
+
+# Runs a Matlab script named 'myscript'
+/home/alexa157/CodecTune/codec-driver/build/codec_driver /scratch/bell/alexa157/googledata/Animation/1080P/Animation_1080P-01b3.mkv ./empty.file
