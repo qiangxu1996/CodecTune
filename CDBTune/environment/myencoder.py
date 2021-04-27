@@ -41,10 +41,14 @@ class MyEncoder(object):
         #stats_dict = dict((key, getattr(stats, key)) for key in dir(stats) if not key.startswith('__'))
         
     def eval(self, knob):
-        #Kenneth
-        #report the results?
-        #{ssim,encode_fps}
+        flag = self._apply_knobs(knob)
+        if flag != 0:
+            return {"ssim": 0.0, "encode_fps": 0.0}
+
+        ssim , encode_fps = self._get_state(self)
         
+        return {"ssim": ssim,
+                "encode_fps": encode_fps}
         
         
     def step(self, knob):
