@@ -1,3 +1,0 @@
-/mnt/c/Users/Billy/Desktop/2021 Spring/ECE595-SE/github/CodecTune/codec-driver/build/CMakeFiles/rebuild_cache.dir
-/mnt/c/Users/Billy/Desktop/2021 Spring/ECE595-SE/github/CodecTune/codec-driver/build/CMakeFiles/codec_driver.dir
-/mnt/c/Users/Billy/Desktop/2021 Spring/ECE595-SE/github/CodecTune/codec-driver/build/CMakeFiles/edit_cache.dir
