@@ -54,19 +54,16 @@ def main():
     
     while(is_encode_done() == False):
         total_time = float(encoder_run())
-        print(get_frame_stats())
         stats = get_frame_stats()
-        #print(stats.__dict__)
-        #print("Segment SSIM is: ",stats.ssim)
-        #qp = float(get_qp())
-        #print("Segement FPS is: ", total_time)
-        #print("Segement QP is: ", qp)
+
+        #Create the python dictionary with all the stats
         stats_dict = dict((key, getattr(stats, key)) for key in dir(stats) if not key.startswith('__'))
+
+        #Optional: Just printing the dict, this is debugging 
         for k,v in stats_dict.iteritems():
-            print key,value,"\n"
-    
-    #print(qp, 'lets gooooooooooo')
-    #print(total_time, '  this is total time')
+
+            print("\t" + k + ": " + str(v))  
+
     return 0
     
 
