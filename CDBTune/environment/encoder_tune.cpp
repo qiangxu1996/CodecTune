@@ -134,11 +134,11 @@ public:
 
     }
 
-    void config(Config &config) {
+    int config(Config &config) {
         for (auto &[k, v] : config)
             x265_param_parse(param, k.c_str(), v.c_str());
         if (encoder)
-            x265_encoder_reconfig(encoder, param);
+            return x265_encoder_reconfig(encoder, param);
     }
     
     bool test_pybind(int i, int j){
