@@ -35,10 +35,17 @@ class MyEncoder(object):
         # extract statistics
         
     def _get_internal_metrics(self):
-        #Eduardo
+
         #Do the Encode
-        #get the frame Stats {ssim,encode_fps}
-        #stats_dict = dict((key, getattr(stats, key)) for key in dir(stats) if not key.startswith('__'))
+        encoder_fps = float(encoder_run())
+        stats = get_frame_stats()
+        
+        #get the frame Stats
+        stats_dict = dict((key, getattr(stats, key)) \
+        for key in dir(stats) if not key.startswith('__')) #ignore default python attributes
+        
+        return stats_dict, encode_fps
+
         
     def eval(self, knob):
         flag = self._apply_knobs(knob)
@@ -57,9 +64,12 @@ class MyEncoder(object):
         
         
         
-    def _get_state(self, knob):
-        #get_internal_metrics
-        #Eduardo
+    def _get_state(self):
+        #ssim is both external and internal - encode fps is only external     
+        internal_metrics, encode_fps = self._get_internal_metrics #calls encoder
+        external_metrics = {'encode_fps':encode_fps, 'ssim':internal_metrics['ssim']}
+
+        return external_metrics, internal_metrics
         
         
     def _apply_knobs(self, knob):
