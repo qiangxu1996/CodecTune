@@ -1,4 +1,5 @@
 import numpy as np
+import knobs
 from encoder_tune import *
 import os
 import knobs
@@ -38,16 +39,27 @@ class MyEncoder(object):
         # extract statistics
         
     def _get_internal_metrics(self):
-        #Eduardo
+
         #Do the Encode
-        #get the frame Stats {ssim,encode_fps}
-        #stats_dict = dict((key, getattr(stats, key)) for key in dir(stats) if not key.startswith('__'))
+        encoder_fps = float(encoder_run())
+        stats = get_frame_stats()
+        
+        #get the frame Stats
+        stats_dict = dict((key, getattr(stats, key)) \
+        for key in dir(stats) if not key.startswith('__')) #ignore default python attributes
+        
+        return stats_dict, encode_fps
+
         
     def eval(self, knob):
-        #Kenneth
-        #report the results?
-        #{ssim,encode_fps}
+        flag = self._apply_knobs(knob)
+        if flag != 0:
+            return {"ssim": 0.0, "encode_fps": 0.0}
+
+        ssim , encode_fps = self._get_state(self)
         
+        return {"ssim": ssim,
+                "encode_fps": encode_fps}
         
     def _get_best_now(self, filename):
         with open(BEST_NOW  + filename) as f:
@@ -113,9 +125,12 @@ class MyEncoder(object):
         return reward, next_state, terminate, self.score, external_metrics
         
         
-    def _get_state(self, knob):
-        #get_internal_metrics
-        #Eduardo
+    def _get_state(self):
+        #ssim is both external and internal - encode fps is only external     
+        internal_metrics, encode_fps = self._get_internal_metrics #calls encoder
+        external_metrics = {'encode_fps':encode_fps, 'ssim':internal_metrics['ssim']}
+
+        return external_metrics, internal_metrics
         
         
     def _apply_knobs(self, knob):
@@ -129,9 +144,30 @@ class MyEncoder(object):
     def initialize(self):
         """Initialize the encoder instance environment
         """
-        #Kenneth
-        #apply_knobs
-        pass
+        self.score = 0.0
+        self.steps = 0
+        self.terminate = False
+        self.last_external_metrics = []
+        def_knobs = None
+        
+        for item in KNOB_DETAILS:
+            flag = self._apply_knobs([(str(item),str(KNOB_DETAILS[item][1][2]))])
+            def_knobs[str(item)] = str(KNOB_DETAILS[item][1][2])
+            if flag != 0:
+                print("Knob Application of knob " + str(item) + " with value " +str(KNOB_DETAILS[item][1][2]) + " resulted in error " + str(flag) + " in my encoder initialize");
+        
+        internal_metrics = self._get_state(self)
+        state = internal_metrics
+        self.default_externam_metrics = internal_metrics
+        self.last_external_metrics = internal_metrics
+        
+        knobs.save_knobs(
+            def_knobs,
+            metrics=internal_metrics,
+            knob_file='%s/tuner/save_knobs/knob_metric.txt' % PROJECT_DIR
+        )
+        
+        return state, internal_metrics
     
     
     def _get_reward(self, external_metrics):
