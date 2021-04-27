@@ -1,4 +1,5 @@
 import numpy as np
+import knobs
 from encoder_tune import *
 
 class MyEncoder(object):
@@ -60,15 +61,36 @@ class MyEncoder(object):
     def _apply_knobs(self, knob):
         """ Apply Knobs to the instance
         """
-        #Yiming <"thread_pools","32">
+        #Yiming [("thread_pools","32"), ... (param "k",val "v")]
         self.encoder.config(knob)
     
     def initialize(self):
         """Initialize the encoder instance environment
         """
-        #Kenneth
-        #apply_knobs
-        pass
+        self.score = 0.0
+        self.steps = 0
+        self.terminate = False
+        self.last_external_metrics = []
+        def_knobs = None
+        
+        for item in KNOB_DETAILS:
+            flag = self._apply_knobs([(str(item),str(KNOB_DETAILS[item][1][2]))])
+            def_knobs[str(item)] = str(KNOB_DETAILS[item][1][2])
+            if flag != 0:
+                print("Knob Application of knob " + str(item) + " with value " +str(KNOB_DETAILS[item][1][2]) + " resulted in error " + str(flag) + " in my encoder initialize");
+        
+        internal_metrics = self._get_state(self)
+        state = internal_metrics
+        self.default_externam_metrics = internal_metrics
+        self.last_external_metrics = internal_metrics
+        
+        knobs.save_knobs(
+            def_knobs,
+            metrics=internal_metrics,
+            knob_file='%s/tuner/save_knobs/knob_metric.txt' % PROJECT_DIR
+        )
+        
+        return state, internal_metrics
     
     
     def _get_reward(self, external_metrics):
