@@ -127,7 +127,7 @@ class MyEncoder(object):
         
     def _get_state(self):
         #ssim is both external and internal - encode fps is only external     
-        internal_metrics, encode_fps = self._get_internal_metrics #calls encoder
+        internal_metrics, encode_fps = self._get_internal_metrics() #calls encoder
         external_metrics = [internal_metrics['ssim'], encode_fps]
 
         return external_metrics, internal_metrics
@@ -171,11 +171,9 @@ class MyEncoder(object):
     
     
     def _get_reward(self, external_metrics):
-        #Qiang
-        #reward = ssim
-        #if encode_fps < Evaluator.TARGET_FPS:
-           #reward -= Evaluator.FPS_FACTOR * (Evaluator.TARGET_FPS - encode_fps
-        pass
-        
-        
+        target_fps = 30
+        reward = external_metrics[0]
+        if external_metrics[1] < target_fps:
+           reward -= (target_fps - external_metrics[1]) / 10
+        return reward
         
