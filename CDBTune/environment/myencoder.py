@@ -7,6 +7,8 @@ import knobs
 BEST_NOW = ""
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+KNOB_DETAILS = knobs.init_knobs()
+
 class MyEncoder(object):
     def __init__(self, video, width, height, fps, num_metric=42):
         self.video = video
@@ -20,11 +22,14 @@ class MyEncoder(object):
         self.last_external_metrics = []
         self.default_externam_metrics = None
         self.num_metric = num_metric
+
+        knobs.init_knobs(num_more_knobs=0)
+        self.default_knobs = knobs.get_init_knobs()
         
         #create an x265 encoder
-        encoder_create(width, height, fps)
+        encoder_create(self.width, self.height, self.fps)
         #load the picture queue with frames in it's own thread
-        push_frame_thread(video)
+        push_frame_thread(self.video)
         
         # create a new thread to push frames
         # c++ main w/o l116
@@ -139,7 +144,7 @@ class MyEncoder(object):
         """ Apply Knobs to the instance
         """
         #Yiming <"thread_pools","32">
-        return config(knob)
+        return encoder_config(knob)
         
     
     def initialize(self):
@@ -149,21 +154,33 @@ class MyEncoder(object):
         self.steps = 0
         self.terminate = False
         self.last_external_metrics = []
-        def_knobs = None
+        flag = self._apply_knobs(self.default_knobs)
+        i = 0
+        while not flag:
+            flag = self._apply_knobs(self.default_knobs)
+            i += 1
+            if i >= 5:
+                print("Initialize: {} times ....".format(i))
+
+
+        '''
+        def_knobs = {}
+
+        
         
         for item in KNOB_DETAILS:
             flag = self._apply_knobs([(str(item),str(KNOB_DETAILS[item][1][2]))])
             def_knobs[str(item)] = str(KNOB_DETAILS[item][1][2])
             if flag != 0:
-                print("Knob Application of knob " + str(item) + " with value " +str(KNOB_DETAILS[item][1][2]) + " resulted in error " + str(flag) + " in my encoder initialize");
-        
-        external_metrics, internal_metrics = self._get_state(self)
+                print("Knob Application of knob " + str(item) + " with value " +str(KNOB_DETAILS[item][1][2]) + " resulted in error " + str(flag) + " in my encoder initialize")
+       ''' 
+        external_metrics, internal_metrics = self._get_state()
         state = internal_metrics
         self.default_externam_metrics = external_metrics
         self.last_external_metrics = external_metrics
         
         knobs.save_knobs(
-            def_knobs,
+            self.default_knobs,
             metrics=external_metrics,
             knob_file='%s/tuner/save_knobs/knob_metric.txt' % PROJECT_DIR
         )

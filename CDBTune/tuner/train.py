@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 Train the model
+
+To run: 1. Paste video in directory(same as file) and the encoder_tune.so (from enviroment/build)
+        2. in console -> python train.py --input vid.mkv --width 1920 --height 1080 --fps 30
 """
 
 import os
@@ -67,7 +70,7 @@ if __name__ == '__main__':
         #mean_var_path='mean_var.pkl',
         mean_var_path = None,
         #ouprocess=not opt.noisy
-        outprocess=True
+        #outprocess=True
     )
 
     if not os.path.exists('log'):
@@ -95,6 +98,7 @@ if __name__ == '__main__':
     if opt.other_knob != 0:
         logger.warn('USE Other Knobs')
 
+    environment.init_knobs()
     current_knob = environment.get_init_knobs()
 
     # decay rate

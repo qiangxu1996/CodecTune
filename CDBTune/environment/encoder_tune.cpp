@@ -134,13 +134,14 @@ public:
 
     }
 
-    int config(Config &config) {
-        for (auto &[k, v] : config)
+    
+    int config(Config config) {
+        for (auto [k, v] : config)
             x265_param_parse(param, k.c_str(), v.c_str());
         if (encoder)
             return x265_encoder_reconfig(encoder, param);
     }
-    
+
     bool test_pybind(int i, int j){
         std::cout<<"C++ Sum: "<<i+j;
         return true;
@@ -160,6 +161,10 @@ private:
 };
 
 Encoder* encoder;
+using Config = std::vector<std::pair<string, string>>;
+int encoder_config(Config config){
+    return encoder->config(config);
+}
 
 double get_qp(){
     return encoder->frame_qp;
@@ -361,5 +366,6 @@ PYBIND11_MODULE(encoder_tune, m){
     m.def("get_qp", &get_qp);
     m.def("is_encode_done", &is_encode_done);
     m.def("get_frame_stats", &get_frame_stats);
+    m.def("encoder_config", &encoder_config);
     //m.def("load_video", &load_video);
 }

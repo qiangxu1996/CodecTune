@@ -55,7 +55,7 @@ EXTENDED_KNOBS = None
 num_knobs = len(KNOBS)
 
 
-def init_knobs(instance, num_more_knobs):
+def init_knobs(num_more_knobs=0):
     #global instance_name
     #global memory_size
     #global disk_size
