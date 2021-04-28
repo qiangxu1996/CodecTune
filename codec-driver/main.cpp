@@ -20,14 +20,17 @@ public:
 
     Encoder(int width, int height, double fps) {
         x265_param_default(param);
+        x265_param_default_preset(param, "medium", "ssim");
         param->sourceWidth = width;
         param->sourceHeight = height;
         param->fpsNum = fps;
         param->fpsDenom = 1;
-        param->bEnablePsnr = 1;
         param->bEnableSsim = 1;
         param->rc.bitrate = 4500;
         param->rc.rateControlMode = X265_RC_ABR;
+
+        encoder = x265_encoder_open(param);
+        pic_out = new_pic();
 
         loaded_pics.set_capacity(QUEUE_SIZE);
         free_pics.set_capacity(QUEUE_SIZE);
@@ -49,12 +52,12 @@ public:
             delete[] static_cast<Mat *>(pic->userData);
             x265_picture_free(pic);
         }
+        x265_picture_free(pic_out);
+        x265_encoder_close(encoder);
         x265_param_free(param);
     }
 
     void operator()() {
-        encoder = x265_encoder_open(param);
-        auto pic_out = new_pic();
         while (true) {
             x265_picture *pic;
             x265_nal *pp_nal;
@@ -72,23 +75,20 @@ public:
             delete[] static_cast<Mat *>(pic->userData);
             free_pics.push(pic);
         }
-        x265_picture_free(pic_out);
-        x265_encoder_close(encoder);
-        encoder = nullptr;
     }
 
-    void config(Config &config) {
+    int reconfig(Config &config) {
         for (auto &[k, v] : config)
             x265_param_parse(param, k.c_str(), v.c_str());
-        if (encoder)
-            x265_encoder_reconfig(encoder, param);
+        return x265_encoder_reconfig(encoder, param);
     }
 
 private:
     const int QUEUE_SIZE = 24;
 
     x265_param *param = x265_param_alloc();
-    x265_encoder *encoder = nullptr;
+    x265_encoder *encoder;
+    x265_picture *pic_out;
 
     x265_picture *new_pic() {
         auto pic = x265_picture_alloc();
@@ -112,7 +112,8 @@ int main(int argc, char *argv[]) {
         config.push_back(std::make_pair(k, v));
 
     Encoder encoder(width, height, fps);
-    encoder.config(config);
+    if (encoder.reconfig(config) < 0)
+        return 1;
     std::thread encoder_thread(std::ref(encoder));
 
     Mat frame;
