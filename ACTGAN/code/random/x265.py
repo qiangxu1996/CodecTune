@@ -108,20 +108,20 @@ def rand(eval):
             i += 1
 
 def ea(eval):
-    pop_size = 15
+    pop_size = 30
     creator.create('FitnessMax', base.Fitness, weights=(1.0,))
     creator.create('Individual', list, fitness=creator.FitnessMax)
     pop = [individual(creator.Individual) for _ in range(pop_size)]
 
     toolbox = base.Toolbox()
-    toolbox.register('mate', tools.cxTwoPoint)
+    toolbox.register('mate', tools.cxUniform, indpb=.1)
     low = [r[0] for _, r in knobs]
     up = [r[-1] for _, r in knobs]
     toolbox.register('mutate', tools.mutUniformInt, low=low, up=up, indpb=.1)
     toolbox.register('select', tools.selTournament, tournsize=3)
     toolbox.register('evaluate', eval)
 
-    algorithms.eaMuPlusLambda(pop, toolbox, pop_size, 15, .5, .2, 50)
+    algorithms.eaMuPlusLambda(pop, toolbox, pop_size, 30, .2, .5, 25)
 
 if __name__ == '__main__':
     eval = Evaluator(sys.argv[1])
