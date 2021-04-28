@@ -32,13 +32,14 @@ class MyEncoder(object):
     
     def _encode_complete(self):
         return is_encode_done()
-    
+
     def _get_external_metrics(self):
+        pass
         #NO?
         # encoder 
         # run() (operator()())
         # extract statistics
-        
+
     def _get_internal_metrics(self):
 
         #Do the Encode
