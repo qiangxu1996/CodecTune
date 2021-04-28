@@ -128,7 +128,7 @@ class MyEncoder(object):
     def _get_state(self):
         #ssim is both external and internal - encode fps is only external     
         internal_metrics, encode_fps = self._get_internal_metrics #calls encoder
-        external_metrics = {'encode_fps':encode_fps, 'ssim':internal_metrics['ssim']}
+        external_metrics = [internal_metrics['ssim'], encode_fps]
 
         return external_metrics, internal_metrics
         
