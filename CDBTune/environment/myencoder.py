@@ -5,9 +5,10 @@ import os
 import knobs
 
 BEST_NOW = ""
+PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 class MyEncoder(object):
-    def __init__(self, video, width, height, fps):
+    def __init__(self, video, width, height, fps, num_metric=42):
         self.video = video
         self.width = width
         self.height = height
@@ -18,7 +19,7 @@ class MyEncoder(object):
         self.terminate = False
         self.last_external_metrics = []
         self.default_externam_metrics = None
-        self.num_metric = 0
+        self.num_metric = num_metric
         
         #create an x265 encoder
         encoder_create(width, height, fps)
@@ -120,10 +121,10 @@ class MyEncoder(object):
         knobs.save_knobs(
             knob=knob,
             metrics=external_metrics,
-            knob_file='knob_metric.txt'
+            knob_file='%s/tuner/save_knobs/knob_metric.txt' % PROJECT_DIR
         )
         return reward, next_state, terminate, self.score, external_metrics
-        
+    
         
     def _get_state(self):
         #ssim is both external and internal - encode fps is only external     
@@ -138,7 +139,6 @@ class MyEncoder(object):
         """
         #Yiming <"thread_pools","32">
         return config(knob)
-        
         
     
     def initialize(self):
@@ -156,18 +156,18 @@ class MyEncoder(object):
             if flag != 0:
                 print("Knob Application of knob " + str(item) + " with value " +str(KNOB_DETAILS[item][1][2]) + " resulted in error " + str(flag) + " in my encoder initialize");
         
-        internal_metrics = self._get_state(self)
+        external_metrics, internal_metrics = self._get_state(self)
         state = internal_metrics
-        self.default_externam_metrics = internal_metrics
-        self.last_external_metrics = internal_metrics
+        self.default_externam_metrics = external_metrics
+        self.last_external_metrics = external_metrics
         
         knobs.save_knobs(
             def_knobs,
-            metrics=internal_metrics,
+            metrics=external_metrics,
             knob_file='%s/tuner/save_knobs/knob_metric.txt' % PROJECT_DIR
         )
         
-        return state, internal_metrics
+        return state, external_metrics
     
     
     def _get_reward(self, external_metrics):
@@ -175,5 +175,10 @@ class MyEncoder(object):
         reward = external_metrics[0]
         if external_metrics[1] < target_fps:
            reward -= (target_fps - external_metrics[1]) / 10
+        self.score += reward
         return reward
+
+    
+    def _terminate(self):
+        return self.terminate
         
