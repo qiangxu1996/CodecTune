@@ -100,12 +100,8 @@ class Evaluator:
 
 
 def rand(eval):
-    i = 0
-    while i < 300:
-        config_values = individual()
-        reward = eval(config_values)[0]
-        if reward > Evaluator.REWARD_MIN:
-            i += 1
+    for _ in range(300):
+        eval(individual())
 
 def ea(eval):
     pop_size = 30
