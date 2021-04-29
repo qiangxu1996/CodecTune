@@ -123,6 +123,14 @@ def ea(eval):
 
     algorithms.eaMuPlusLambda(pop, toolbox, pop_size, 30, .2, .5, 25)
 
+def feed(eval, config_file):
+    with open(config_file, newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        next(reader)
+        for config_values in reader:
+            config_values = [int(c) for c in config_values]
+            eval(config_values)
+
 if __name__ == '__main__':
     eval = Evaluator(sys.argv[1])
     ea(eval)

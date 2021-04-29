@@ -5,6 +5,9 @@ GAN
 @author: Founder
 """
 
+import sys
+from pathlib import Path
+
 import tensorflow as tf
 import numpy as np
 import pandas as pd
@@ -26,9 +29,9 @@ N_IDEAS = 5             # think of this as number of ideas for generating an art
 #NumOfF = 14            # it could be total point G can draw in the canvas
 
 #wordcount/random
-file_read = 'E:/GANs/kdd/113/DandT.csv'
+data_file = Path(sys.argv[1])
 #data = dn.sparkdata(file_read)
-data = dn.kafkadata(file_read)
+data = dn.x265data(data_file)
 #data = dn.hivedata(file_read)
 #data = dn.redisdata(file_read)
 #data = dn.cassandradata(file_read)
@@ -38,7 +41,7 @@ data = dn.kafkadata(file_read)
 print(data)
 NumOfF = data.columns.size
 data = data.iloc[:BATCH_SIZE,:NumOfF]
-data = data.as_matrix()
+data = data.to_numpy()
 
 #标准化    
 ss = StandardScaler()
@@ -137,8 +140,7 @@ for step in range(Epoch):
 
 print(G_paintings[0])
 outp = ss.inverse_transform(outp)
-output = file_read.strip('.csv')   
-output = output + '-out.csv'
+output = data_file.with_name(data_file.stem + '-out.csv')
 outp = pd.DataFrame(outp)
 outp.to_csv(output, index=False)
 

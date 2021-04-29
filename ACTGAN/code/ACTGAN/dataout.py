@@ -5,6 +5,9 @@ Created on Sun Aug 19 11:16:30 2018
 @author: Founder
 """
 
+import sys
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 #import matplotlib.pyplot as plt
@@ -430,9 +433,25 @@ def spark_out(file):
 
     return data
 
+def x265_out(file):
+    data = pd.read_csv(file).round().astype(np.int_)
 
-file_read = 'E:/GANs/kdd/113/DandT-out.csv'
-data = kafka_out(file_read)
+    def idx(cols):
+        d = {c: int(i) for i, c in enumerate(cols)}
+        return data[cols].rename(columns=d).idxmax(1)
+
+    rskip_col = ['29', '30', '31']
+    rskip = idx(rskip_col)
+    limit_tu_col = ['32', '33', '34', '35', '36']
+    limit_tu = idx(limit_tu_col)
+
+    data.drop(rskip_col + limit_tu_col, 1, inplace=True)
+    data.insert(17, '29', rskip)
+    data.insert(30, '30', limit_tu)
+    return data
+
+data_file = Path(sys.argv[1])
+data = x265_out(data_file)
 #print(data)
 
 #data = data.iloc[start:(start+BATCH_SIZE),:11]
@@ -442,4 +461,4 @@ data = kafka_out(file_read)
 #test_data = pd.DataFrame(test_data)
 #test_data.rename(columns=ColumnsName, inplace=True)
 
-data.to_csv(file_read, index=False)
+data.to_csv(data_file.with_name(data_file.stem + '-clean.csv'), index=False)

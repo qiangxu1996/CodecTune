@@ -157,3 +157,12 @@ def mysqldata(file):
     
     return data
 
+def x265data(file):
+    data = pd.read_csv(file)
+    data.sort_values('reward', ascending=False, inplace=True)
+    data.drop(['fps', 'ssim', 'reward'], 1, inplace=True)
+    data['ctu'] //= 16
+    data['min-cu-size'] //= 8
+    categoricals = ['rskip', 'limit-tu']
+    data = pd.get_dummies(data, prefix=categoricals, columns=categoricals)
+    return data
