@@ -26,7 +26,7 @@ public:
         param->fpsNum = fps;
         param->fpsDenom = 1;
         param->bEnableSsim = 1;
-        param->rc.bitrate = 4500;
+        param->rc.bitrate = 3000;
         param->rc.rateControlMode = X265_RC_ABR;
 
         encoder = x265_encoder_open(param);
