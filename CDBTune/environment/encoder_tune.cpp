@@ -162,6 +162,7 @@ private:
 
 Encoder* encoder;
 using Config = std::vector<std::pair<string, string>>;
+
 int encoder_config(Config config){
     return encoder->config(config);
 }
@@ -297,7 +298,7 @@ PYBIND11_MODULE(encoder_tune, m){
         .def_readonly("maxChromaVLevel", &x265_frame_stats::maxChromaVLevel)  
         .def_readonly("minChromaVLevel", &x265_frame_stats::minChromaVLevel)   
         .def_readonly("avgChromaVLevel", &x265_frame_stats::avgChromaVLevel)  
-        .def_readonly("sliceType", &x265_frame_stats::sliceType) 
+        //.def_readonly("sliceType", &x265_frame_stats::sliceType) 
         .def_readonly("bScenecut", &x265_frame_stats::bScenecut)   
         .def_readonly("ipCostRatio", &x265_frame_stats::ipCostRatio)  
         .def_readonly("frameLatency", &x265_frame_stats::frameLatency)    

@@ -15,6 +15,7 @@ sys.path.append('../')
 import models
 import numpy as np
 import environment
+import pdb
 
 
 def generate_knob(action, method):
@@ -37,10 +38,10 @@ if __name__ == '__main__':
     # parser.add_argument('--instance', type=str, default='mysql1', help='Choose MySQL Instance')
     parser.add_argument('--method', type=str, default='ddpg', help='Choose Algorithm to solve [`ddpg`,`dqn`]')
     parser.add_argument('--memory', type=str, default='', help='add replay memory')
-    # parser.add_argument('--noisy', action='store_true', help='use noisy linear layer')
+    parser.add_argument('--noisy', action='store_true', default=False, help='use noisy linear layer')
     parser.add_argument('--other_knob', type=int, default=0, help='Number of other knobs')
     parser.add_argument('--batch_size', type=int, default=16, help='Training Batch Size')
-    parser.add_argument('--epoches', type=int, default=5000000, help='Training Epoches')
+    parser.add_argument('--epoches', type=int, default=3, help='Training Epoches')
     # parser.add_argument('--benchmark', type=str, default='sysbench', help='[sysbench, tpcc]')
     parser.add_argument('--metric_num', type=int, default=42, help='metric nums')
     parser.add_argument('--default_knobs', type=int, default=31, help='default knobs')
@@ -69,7 +70,7 @@ if __name__ == '__main__':
         opt=ddpg_opt,
         #mean_var_path='mean_var.pkl',
         mean_var_path = None,
-        #ouprocess=not opt.noisy
+        ouprocess=not opt.noisy
         #outprocess=True
     )
 
@@ -123,10 +124,14 @@ if __name__ == '__main__':
     env_restart_times = []
     # choose_action_time
     action_step_times = []
+    
+    # weird
+    sigma = 0
 
     for episode in xrange(opt.epoches):
         current_state, initial_metrics = env.initialize()
-        logger.info("\n[Env initialized][Metric tps: {} lat: {} qps: {}]".format(
+        #print("initial_metrics: ", initial_metrics, "\n")
+        logger.info("\n[Env initialized][Metric ssim: {} fps: {}]".format(
             initial_metrics[0], initial_metrics[1]))
 
         model.reset(sigma)
@@ -137,6 +142,7 @@ if __name__ == '__main__':
             if opt.noisy:
                 model.sample_noise()
             action_step_time = utils.time_start()
+            #pdb.set_trace()
             action = model.choose_action(state) ###
             action_step_time = utils.time_end(action_step_time)
 
@@ -144,11 +150,12 @@ if __name__ == '__main__':
             logger.info("[ddpg] Action: {}".format(action))
 
             env_step_time = utils.time_start()
+            #pdb.set_trace()
             reward, state_, done, score, metrics, restart_time = env.step(current_knob) ###
             env_step_time = utils.time_end(env_step_time)
             logger.info(
-                "\n[{}][Episode: {}][Step: {}][Metric tps:{} lat:{} qps:{}]Reward: {} Score: {} Done: {}".format(
-                    opt.method, episode, t, metrics[0], metrics[1], metrics[2], reward, score, done
+                "\n[{}][Episode: {}][Step: {}][Metric ssim: {} fps: {}]Reward: {} Score: {} Done: {}".format(
+                    opt.method, episode, t, metrics[0], metrics[1], reward, score, done
                 ))
             env_restart_times.append(restart_time)
 
@@ -211,6 +218,10 @@ if __name__ == '__main__':
 
             if done or score < -50:
                 break
+            
+        #break # break after the first epoch
+    
+    print("finish!!!!!!!!!!!!!!!!!!!!!")
 
 
 

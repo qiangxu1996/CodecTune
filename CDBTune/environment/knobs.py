@@ -4,8 +4,8 @@ desciption: Knob information
 
 """
 
-import utils
-import configs
+#import utils
+#import configs
 import collections
 
 # 700GB
@@ -201,7 +201,7 @@ def save_knobs(knob, metrics, knob_file):
     knob_strs = []
     for kv in knob.items():
         knob_strs.append('{}:{}'.format(kv[0], kv[1]))
-    result_str = '{},{},{},'.format(metrics[0], metrics[1], metrics[2])
+    result_str = '{},{},'.format(metrics[0], metrics[1])
     knob_str = "#".join(knob_strs)
     result_str += knob_str
 

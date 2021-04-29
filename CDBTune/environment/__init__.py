@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from mysql import *
+#from mysql import *
 from knobs import *
 from myencoder import *
 
