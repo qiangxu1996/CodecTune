@@ -18,9 +18,9 @@ public:
     PicQueue loaded_pics;
     PicQueue free_pics;
 
-    Encoder(int width, int height, double fps) {
+    Encoder(int width, int height, double fps, const char *preset) {
         x265_param_default(param);
-        x265_param_default_preset(param, "medium", "ssim");
+        x265_param_default_preset(param, preset, "ssim");
         param->sourceWidth = width;
         param->sourceHeight = height;
         param->fpsNum = fps;
@@ -105,13 +105,13 @@ int main(int argc, char *argv[]) {
     int height = video.get(cv::CAP_PROP_FRAME_HEIGHT);
     double fps = video.get(cv::CAP_PROP_FPS);
 
-    std::ifstream config_file(argv[2]);
+    std::ifstream config_file(argv[3]);
     Encoder::Config config;
     string k, v;
     while (config_file >> k >> v)
         config.push_back(std::make_pair(k, v));
 
-    Encoder encoder(width, height, fps);
+    Encoder encoder(width, height, fps, argv[2]);
     if (encoder.reconfig(config) < 0)
         return 1;
     std::thread encoder_thread(std::ref(encoder));

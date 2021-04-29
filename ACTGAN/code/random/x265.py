@@ -79,7 +79,7 @@ class Evaluator:
 
             try:
                 out = subprocess.run(
-                    [driver_path, self.vid_file, str(config_path)],
+                    [driver_path, self.vid_file, 'medium', str(config_path)],
                     capture_output=True, timeout=30, text=True)
             except subprocess.TimeoutExpired:
                 return reward,
