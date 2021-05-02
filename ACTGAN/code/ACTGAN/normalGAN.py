@@ -69,7 +69,7 @@ def Cwork():
 
 #扩大样本操作 Ank
 def Cwork():
-    clist = random.sample(range(BATCH_SIZE), NumOfLine)
+    clist = random.sample(range(len(data)), NumOfLine)
     datause = np.zeros(shape=(NumOfLine, NumOfF))#建立恐惧镇
     j = 0
     for c in clist:
