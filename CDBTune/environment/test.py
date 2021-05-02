@@ -4,7 +4,7 @@ import argparse
 import threading
 #import cv2 as cv
 import pdb
-import faulthandler
+#import faulthandler
 
 def get_args():
     parser = argparse.ArgumentParser(description="train noise2noise model",
@@ -27,7 +27,6 @@ def main():
     width = args.width
     height = args.height
     fps = args.fps
-    
     #encoder = Encoder(width, height, fps)
     #encoder_thread(encoder)
     #encoder_thread(width, height, fps, video)
@@ -40,29 +39,19 @@ def main():
     #load_video(video)
     #pdb.set_trace()
     push_frame_thread(video)
-    print("before encoder_run")
-    #faulthandler.enable()
-    # total_time = float(encoder_run())
-    # qp = float(get_qp())
-    # print("total_time 1", total_time)
-    # print("get_qp 1", qp)
-    # total_time = float(encoder_run())
-    # qp = float(get_qp())
-    # print("total_time 2", total_time)
-    # print("get_qp 2", qp)
-    #cleanup() #DEBUG
     
+    count=0
     while(is_encode_done() == False):
-        total_time = float(encoder_run())
-        stats = get_frame_stats()
+      fps = float(encoder_run())
+      stats = get_frame_stats()
+       #Create the python dictionary with all the stats
+      stats_dict = dict((key, getattr(stats, key)) for key in dir(stats) if not key.startswith('__'))
+      print("Segment " + str(count) + " of video " + str(video) + " had metrics FPS: " + str(fps) + " and SSIM: " + str(stats_dict['ssim']))
+      #Optional: Just printing the dict, this is debugging 
+      #for k,v in stats_dict.iteritems():
+      #    print("\t" + k + ": " + str(v))         
+      count = count + 1
 
-        #Create the python dictionary with all the stats
-        stats_dict = dict((key, getattr(stats, key)) for key in dir(stats) if not key.startswith('__'))
-
-        #Optional: Just printing the dict, this is debugging 
-        for k,v in stats_dict.iteritems():
-
-            print("\t" + k + ": " + str(v))  
 
     return 0
     
