@@ -135,7 +135,9 @@ class MyEncoder(object):
         
         return reward, next_state, terminate, self.score, external_metrics, restart_time
     
-        
+    def set_video(video):
+        self.video = video
+       
     def _get_state(self):
         #ssim is both external and internal - encode fps is only external     
         internal_metrics, encode_fps = self._get_internal_metrics() #calls encoder
