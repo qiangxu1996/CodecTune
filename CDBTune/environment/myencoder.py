@@ -135,7 +135,7 @@ class MyEncoder(object):
         
         return reward, next_state, terminate, self.score, external_metrics, restart_time
     
-    def set_video(video):
+    def set_video(self, video):
         self.video = video
        
     def _get_state(self):
