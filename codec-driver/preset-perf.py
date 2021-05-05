@@ -6,7 +6,8 @@ from pathlib import Path
 
 presets = ['ultrafast', 'superfast', 'veryfast', 'faster', 'fast', 'medium', 'slow', 'slower', 'veryslow', 'placebo']
 summary = re.compile(r'encoded \d+ frames in [\d.]+s \(([\d.]+) fps\), [\d.]+ kb/s, Avg QP:[ \d.]+, SSIM Mean Y: ([\d.]+) \([ \d.]+ dB\)')
-driver_path = ''
+driver_path = 'build/codec_driver'
+timeout = 30
 
 if __name__ == '__main__':
     with open('fps.csv', 'w', newline='') as fpsfile, \
@@ -25,7 +26,7 @@ if __name__ == '__main__':
                 try:
                     out = subprocess.run(
                         [driver_path, vid, p, 'config.txt'],
-                        capture_output=True, timeout=30, text=True)
+                        capture_output=True, timeout=timeout, text=True)
                 except subprocess.TimeoutExpired:
                     fpsrow.append(0)
                     ssimrow.append(0)
