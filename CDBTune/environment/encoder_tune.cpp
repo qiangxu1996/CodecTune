@@ -37,14 +37,15 @@ public:
     PicQueue free_pics;
 
     Encoder(int width, int height, double fps) {
-        x265_param_default(param);
+        //x265_param_default(param);
+        x265_param_default_preset(param, "ultrafast", "ssim");
         param->sourceWidth = width;
         param->sourceHeight = height;
         param->fpsNum = fps;
         param->fpsDenom = 1;
         param->bEnablePsnr = 1;
         param->bEnableSsim = 1;
-        param->rc.bitrate = 4500;
+        param->rc.bitrate = 3000;
         param->rc.rateControlMode = X265_RC_ABR;
 
         loaded_pics.set_capacity(QUEUE_SIZE);
@@ -60,47 +61,47 @@ public:
     }
 
     ~Encoder() {
-        std::cout<<"before anything";
+        //std::cout<<"before anything";
         x265_picture *pic;
-        std::cout<<"before while 1";
+        //std::cout<<"before while 1";
         while (free_pics.try_pop(pic)) {
             x265_picture_free(pic);
         }
-        std::cout<<"before while 2";
+        //std::cout<<"before while 2";
         while (loaded_pics.try_pop(pic)) {
             delete[] static_cast<Mat *>(pic->userData);
             x265_picture_free(pic);
         }
-        std::cout<<"before param_free";
+        //std::cout<<"before param_free";
         x265_param_free(param);
-        std::cout<<"before encoder_close";
+        //std::cout<<"before encoder_close";
         x265_encoder_close(encoder);
-        std::cout<<"destructor done";
+        //std::cout<<"destructor done";
     }
 
     void run() {
         //encoder = x265_encoder_open(param);
-        std::cout<<"im in operator\n";
-        fprintf(stderr,"im in operator\n");
+        //std::cout<<"im in operator\n";
+        //fprintf(stderr,"im in operator\n");
         auto pic_out = new_pic();
         double total_time = 0.0;
         int count = 0;
         struct timespec encode_start,encode_end;
         while (true) {
-            std::cout<<"loop iterate\n";
+            //std::cout<<"loop iterate\n";
             x265_picture *pic;
             x265_nal *pp_nal;
             uint32_t pi_nal;
 
             loaded_pics.pop(pic);
             if (pic == STOP) {
-                int ret;
-                do {
+		int ret;
+             	do {
                     ret = x265_encoder_encode(encoder, &pp_nal, &pi_nal, nullptr, pic_out);
                 } while (ret > 0);
                 clock_gettime(CLOCK_MONOTONIC,&encode_end);
                 stats = pic_out->frameData;
-                total_time = (encode_end.tv_sec - encode_start.tv_sec) + ((encode_end.tv_nsec - encode_start.tv_nsec <0) ? (1000000000-(encode_start.tv_nsec-encode_end.tv_nsec))  : (encode_end.tv_nsec - encode_start.tv_nsec)) / 1000000000.0;
+                total_time = (encode_end.tv_sec + (encode_end.tv_nsec/(1000000000.0)) - (encode_start.tv_sec + (encode_start.tv_nsec/(1000000000.0))));
                 frame_qp = ((x265_frame_stats)(pic_out->frameData)).qp;
                 encode_done = true;
                 break;
@@ -112,13 +113,15 @@ public:
                     clock_gettime(CLOCK_MONOTONIC,&encode_start);
                 }
                 count++;
-                std::cout<<"count"<<count<<"\n";
+                //std::cout<<"count"<<count<<"\n";
             }
             if (count==30){
                 stats = pic_out->frameData;
                 clock_gettime(CLOCK_MONOTONIC,&encode_end);
-                total_time = (encode_end.tv_sec - encode_start.tv_sec) + ((encode_end.tv_nsec - encode_start.tv_nsec <0) ? (1000000000-(encode_start.tv_nsec-encode_end.tv_nsec))  : (encode_end.tv_nsec - encode_start.tv_nsec)) / 1000000000.0;
+                total_time = (encode_end.tv_sec + (encode_end.tv_nsec/(1000000000.0)) - (encode_start.tv_sec + (encode_start.tv_nsec/(1000000000.0))));
                 frame_qp = ((x265_frame_stats)(pic_out->frameData)).qp;
+                delete[] static_cast<Mat *>(pic->userData);
+                free_pics.push(pic);
                 break;
             }
 
@@ -126,9 +129,9 @@ public:
             free_pics.push(pic);
         }
         encode_fps = (double)count/total_time;
-        std::cout<<"before x265_picture_free\n";
+        //std::cout<<"before x265_picture_free\n";
         x265_picture_free(pic_out);
-        std::cout<<"after x265_picture_free\n";
+        //std::cout<<"after x265_picture_free\n";
         //x265_encoder_close(encoder);
         //encoder = nullptr;
 
@@ -172,11 +175,11 @@ double get_qp(){
 }
 
 double encoder_run(){
-    std::cout<<"im in encoder_run\n";
-    fprintf(stderr,"im in encoder_run\n");
+    //std::cout<<"im in encoder_run\n";
+    //fprintf(stderr,"im in encoder_run\n");
     //(*encoder)();
     encoder->run();
-    std::cout<<"leaving encoder_run\n";
+    //std::cout<<"leaving encoder_run\n";
     return encode_fps;
 }
 
@@ -214,16 +217,16 @@ void push_frame(string vid_name){
         
         
     }
-    std::cout<<"while\n";
+    std::cout<<"Sent STOP pic\n";
     return;
 }
 
 void push_frame_thread(string vid_name){
-    std::cout<<"push_frame_thread\n";
+    //std::cout<<"push_frame_thread\n";
     std::thread encoder_thread(push_frame, vid_name);
     //encoder_thread.join();
     encoder_thread.detach();
-    std::cout<<"END push_frame_thread\n";
+    //std::cout<<"END push_frame_thread\n";
     return;
 }
 
