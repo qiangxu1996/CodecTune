@@ -1,8 +1,8 @@
+import argparse
 import csv
 import random
 import re
 import subprocess
-import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -11,6 +11,7 @@ from deap import algorithms, base, creator, tools
 random.seed(0)
 summary = re.compile(r'encoded \d+ frames in [\d.]+s \(([\d.]+) fps\), [\d.]+ kb/s, Avg QP:[ \d.]+, SSIM Mean Y: ([\d.]+) \([ \d.]+ dB\)')
 driver_path = ''
+timeout = 30
 
 knobs = [
     ('ctu', [1, 2, 4]),  # [64, 32, 16]
@@ -80,7 +81,7 @@ class Evaluator:
             try:
                 out = subprocess.run(
                     [driver_path, self.vid_file, 'medium', str(config_path)],
-                    capture_output=True, timeout=30, text=True)
+                    capture_output=True, timeout=timeout, text=True)
             except subprocess.TimeoutExpired:
                 return reward,
 
@@ -128,5 +129,22 @@ def feed(eval, config_file):
             eval(config_values)
 
 if __name__ == '__main__':
-    eval = Evaluator(sys.argv[1])
-    ea(eval)
+    parser = argparse.ArgumentParser()
+    parent_parser = argparse.ArgumentParser(add_help=False)
+    parent_parser.add_argument('vid_file')
+
+    subparsers = parser.add_subparsers(dest='algo', required=True)
+    subparsers.add_parser('rand', parents=[parent_parser])
+    subparsers.add_parser('ea', parents=[parent_parser])
+    feed_parser = subparsers.add_parser('feed', parents=[parent_parser])
+    feed_parser.add_argument('config_file')
+
+    args = parser.parse_args()
+
+    eval = Evaluator(args.vid_file)
+    if args.algo == 'rand':
+        rand(eval)
+    elif args.algo == 'ea':
+        ea(eval)
+    elif args.algo == 'feed':
+        feed(eval, args.config_file)
