@@ -38,12 +38,12 @@ public:
 
     Encoder(int width, int height, double fps) {
         x265_param_default(param);
-        //x265_param_default_preset(param, "ultrafast", "ssim");
+        x265_param_default_preset(param, "medium", "ssim");
         param->sourceWidth = width;
         param->sourceHeight = height;
         param->fpsNum = fps;
         param->fpsDenom = 1;
-        param->bEnablePsnr = 1;
+        //param->bEnablePsnr = 1;
         param->bEnableSsim = 1;
         param->rc.bitrate = 3000;
         param->rc.rateControlMode = X265_RC_ABR;
