@@ -36,7 +36,7 @@ Minimally, the configuration file can be an empty file.
 
 A script `preset-perf.py` is provided to benchmark the performance of different presets.
 
-To use the script, first change the `driver_path` variable to point to the compiled codec driver, and the `timeout` variable to the longest encoding time before killing the encoder.
+To use the script, first change the `driver_path` variable to point to the compiled codec driver, change the `timeout` variable to the longest encoding time before killing the encoder, and create an empty `config.txt` under the current directory.
 
 After configuration, run
 
