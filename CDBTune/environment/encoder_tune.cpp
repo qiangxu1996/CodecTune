@@ -37,13 +37,13 @@ public:
     PicQueue free_pics;
 
     Encoder(int width, int height, double fps) {
-        //x265_param_default(param);
-        x265_param_default_preset(param, "ultrafast", "ssim");
+        x265_param_default(param);
+        x265_param_default_preset(param, "medium", "ssim");
         param->sourceWidth = width;
         param->sourceHeight = height;
         param->fpsNum = fps;
         param->fpsDenom = 1;
-        param->bEnablePsnr = 1;
+        //param->bEnablePsnr = 1;
         param->bEnableSsim = 1;
         param->rc.bitrate = 3000;
         param->rc.rateControlMode = X265_RC_ABR;
@@ -165,6 +165,7 @@ private:
 
 Encoder* encoder;
 using Config = std::vector<std::pair<string, string>>;
+
 int encoder_config(Config config){
     return encoder->config(config);
 }
@@ -193,6 +194,7 @@ void cleanup(){
 void push_frame(string vid_name){
     //std::cout<<"push_frame\n";
     //std::cout<<vid_name+"\n";
+    encode_done = false;
     cv::VideoCapture video(vid_name);
     //std::cout<<"videocapture\n";
     Mat frame;
@@ -300,7 +302,7 @@ PYBIND11_MODULE(encoder_tune, m){
         .def_readonly("maxChromaVLevel", &x265_frame_stats::maxChromaVLevel)  
         .def_readonly("minChromaVLevel", &x265_frame_stats::minChromaVLevel)   
         .def_readonly("avgChromaVLevel", &x265_frame_stats::avgChromaVLevel)  
-        .def_readonly("sliceType", &x265_frame_stats::sliceType) 
+        //.def_readonly("sliceType", &x265_frame_stats::sliceType) 
         .def_readonly("bScenecut", &x265_frame_stats::bScenecut)   
         .def_readonly("ipCostRatio", &x265_frame_stats::ipCostRatio)  
         .def_readonly("frameLatency", &x265_frame_stats::frameLatency)    

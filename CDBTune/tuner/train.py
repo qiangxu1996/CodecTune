@@ -14,7 +14,8 @@ import argparse
 sys.path.append('../')
 import models
 import numpy as np
-import environment
+import environment 
+import pdb
 
 
 def generate_knob(action, method):
@@ -37,17 +38,18 @@ if __name__ == '__main__':
     # parser.add_argument('--instance', type=str, default='mysql1', help='Choose MySQL Instance')
     parser.add_argument('--method', type=str, default='ddpg', help='Choose Algorithm to solve [`ddpg`,`dqn`]')
     parser.add_argument('--memory', type=str, default='', help='add replay memory')
-    # parser.add_argument('--noisy', action='store_true', help='use noisy linear layer')
+    parser.add_argument('--noisy', action='store_true', default=False, help='use noisy linear layer')
     parser.add_argument('--other_knob', type=int, default=0, help='Number of other knobs')
     parser.add_argument('--batch_size', type=int, default=16, help='Training Batch Size')
-    parser.add_argument('--epoches', type=int, default=5000000, help='Training Epoches')
+    parser.add_argument('--epoches', type=int, default=3, help='Training Epoches')
     # parser.add_argument('--benchmark', type=str, default='sysbench', help='[sysbench, tpcc]')
     parser.add_argument('--metric_num', type=int, default=42, help='metric nums')
     parser.add_argument('--default_knobs', type=int, default=31, help='default knobs')
     opt = parser.parse_args()
 
     # Create Environment
-    env = environment.MyEncoder(opt.input, opt.width, opt.height, opt.fps, opt.metric_num)
+    print(environment)
+    env = environment.MyEncoder('null', opt.width, opt.height, opt.fps, opt.metric_num)
 
     # Build models
     ddpg_opt = dict()
@@ -69,7 +71,7 @@ if __name__ == '__main__':
         opt=ddpg_opt,
         #mean_var_path='mean_var.pkl',
         mean_var_path = None,
-        #ouprocess=not opt.noisy
+        ouprocess=not opt.noisy
         #outprocess=True
     )
 
@@ -123,94 +125,117 @@ if __name__ == '__main__':
     env_restart_times = []
     # choose_action_time
     action_step_times = []
-
+    
+    # weird
+    sigma = 0
+    
+    #get the file glob file
+    filelist = []
+    fp = open(opt.input)
+    lines = fp.readlines()
+    for line in lines:
+        filelist.append(line.rstrip())
+    fp.close()
+    
     for episode in xrange(opt.epoches):
-        current_state, initial_metrics = env.initialize()
-        logger.info("\n[Env initialized][Metric tps: {} lat: {} qps: {}]".format(
-            initial_metrics[0], initial_metrics[1]))
-
         model.reset(sigma)
-        t = 0
-        while True:
-            step_time = utils.time_start() ###
-            state = current_state ###
-            if opt.noisy:
-                model.sample_noise()
-            action_step_time = utils.time_start()
-            action = model.choose_action(state) ###
-            action_step_time = utils.time_end(action_step_time)
+        for videofile in filelist:
+            env.set_video(videofile)
+            current_state, initial_metrics = env.initialize()
+            #print("initial_metrics: ", initial_metrics, "\n")
+            logger.info("\n[Env initialized][Metric ssim: {} fps: {}]".format(
+                initial_metrics[0], initial_metrics[1]))
 
-            current_knob = generate_knob(action, 'ddpg') ###
-            logger.info("[ddpg] Action: {}".format(action))
+            model.reset(sigma)
+            t = 0
+            while True:
+                step_time = utils.time_start() ###
+                state = current_state ###
+                if opt.noisy:
+                    model.sample_noise()
+                action_step_time = utils.time_start()
+                #pdb.set_trace()
+                action = model.choose_action(state) ###
+                action_step_time = utils.time_end(action_step_time)
 
-            env_step_time = utils.time_start()
-            reward, state_, done, score, metrics, restart_time = env.step(current_knob) ###
-            env_step_time = utils.time_end(env_step_time)
-            logger.info(
-                "\n[{}][Episode: {}][Step: {}][Metric tps:{} lat:{} qps:{}]Reward: {} Score: {} Done: {}".format(
-                    opt.method, episode, t, metrics[0], metrics[1], metrics[2], reward, score, done
-                ))
-            env_restart_times.append(restart_time)
+                current_knob = generate_knob(action, 'ddpg') ###
+                logger.info("[ddpg] Action: {}".format(action))
 
-            next_state = state_ ###
+                env_step_time = utils.time_start()
+                #pdb.set_trace()
+                reward, state_, done, score, metrics, restart_time = env.step(current_knob) ###
+                env_step_time = utils.time_end(env_step_time)
+                logger.info(
+                    "\n[{}][Episode: {}][Step: {}][File: {} Metric ssim: {} fps: {}]Reward: {} Score: {} Done: {}".format(
+                        opt.method, episode, t, videofile, metrics[0], metrics[1], reward, score, done
+                    ))
+                env_restart_times.append(restart_time)
 
-            model.add_sample(state, action,reward, next_state, done) ###
+                next_state = state_ ###
 
-            # if reward > 10:
-            if reward > -1000000: ###
-                fine_state_actions.append((state, action)) ###
+                model.add_sample(state, action,reward, next_state, done) ###
 
-            current_state = next_state ###
-            train_step_time = 0.0 
-            if len(model.replay_memory) > opt.batch_size: ###
-                losses = [] ###
-                train_step_time = utils.time_start() ###
-                for i in xrange(2): ###
-                    losses.append(model.update()) ###
-                    train_step += 1 ###
-                train_step_time = utils.time_end(train_step_time)/2.0
+                # if reward > 10:
+                if reward > -1000000: ###
+                    fine_state_actions.append((state, action)) ###
 
-                accumulate_loss[0] += sum([x[0] for x in losses]) ###
-                accumulate_loss[1] += sum([x[1] for x in losses]) ###
-                logger.info('[{}][Episode: {}][Step: {}] Critic: {} Actor: {}'.format(
-                    opt.method, episode, t, accumulate_loss[0] / train_step, accumulate_loss[1] / train_step
-                ))
+                current_state = next_state ###
+                train_step_time = 0.0 
+                if len(model.replay_memory) > opt.batch_size: ###
+                    losses = [] ###
+                    train_step_time = utils.time_start() ###
+                    for i in xrange(2): ###
+                        losses.append(model.update()) ###
+                        train_step += 1 ###
+                    train_step_time = utils.time_end(train_step_time)/2.0
 
-            # all_step time
-            step_time = utils.time_end(step_time)
-            step_times.append(step_time)
-            # env_step_time
-            env_step_times.append(env_step_time)
-            # training step time
-            train_step_times.append(train_step_time)
-            # action step times
-            action_step_times.append(action_step_time)
+                    accumulate_loss[0] += sum([x[0] for x in losses]) ###
+                    accumulate_loss[1] += sum([x[1] for x in losses]) ###
+                    logger.info('[{}][Episode: {}][Step: {}] Critic: {} Actor: {}'.format(
+                        opt.method, episode, t, accumulate_loss[0] / train_step, accumulate_loss[1] / train_step
+                    ))
 
-            logger.info("[{}][Episode: {}][Step: {}] step: {}s env step: {}s train step: {}s restart time: {}s "
-                        "action time: {}s"
-                        .format(opt.method, episode, t, step_time, env_step_time, train_step_time,restart_time,
-                                action_step_time))
+                # all_step time
+                step_time = utils.time_end(step_time)
+                step_times.append(step_time)
+                # env_step_time
+                env_step_times.append(env_step_time)
+                # training step time
+                train_step_times.append(train_step_time)
+                # action step times
+                action_step_times.append(action_step_time)
 
-            logger.info("[{}][Episode: {}][Step: {}][Average] step: {}s env step: {}s train step: {}s "
-                        "restart time: {}s action time: {}s"
-                        .format(opt.method, episode, t, np.mean(step_time), np.mean(env_step_time),
-                                np.mean(train_step_time), np.mean(restart_time), np.mean(action_step_times)))
+                logger.info("[{}][Episode: {}][Step: {}] step: {}s env step: {}s train step: {}s restart time: {}s "
+                            "action time: {}s"
+                            .format(opt.method, episode, t, step_time, env_step_time, train_step_time,restart_time,
+                                    action_step_time))
 
-            t = t + 1
-            step_counter += 1
+                logger.info("[{}][Episode: {}][Step: {}][Average] step: {}s env step: {}s train step: {}s "
+                            "restart time: {}s action time: {}s"
+                            .format(opt.method, episode, t, np.mean(step_time), np.mean(env_step_time),
+                                    np.mean(train_step_time), np.mean(restart_time), np.mean(action_step_times)))
 
-            # save replay memory
-            if step_counter % 10 == 0:
-                model.replay_memory.save('save_memory/{}.pkl'.format(expr_name))
-                utils.save_state_actions(fine_state_actions, 'save_state_actions/{}.pkl'.format(expr_name))
-                # sigma = origin_sigma*(sigma_decay_rate ** (step_counter/10))
+                t = t + 1
+                step_counter += 1
 
-            # save network
-            if step_counter % 5 == 0:
-                model.save_model('model_params', title='{}_{}'.format(expr_name, step_counter))
+                # save replay memory
+                if step_counter % 10 == 0:
+                    model.replay_memory.save('save_memory/{}.pkl'.format(expr_name))
+                    utils.save_state_actions(fine_state_actions, 'save_state_actions/{}.pkl'.format(expr_name))
+                    # sigma = origin_sigma*(sigma_decay_rate ** (step_counter/10))
 
-            if done or score < -50:
-                break
+                # save network
+                if step_counter % 5 == 0:
+                #always save the model
+                    model.save_model('model_params', title='{}_{}'.format(expr_name, step_counter))
+
+                if done or score < -50:
+                    model.save_model('model_params', title='{}_{}'.format(expr_name, step_counter))
+                    break
+            
+            #break # break after the first epoch
+    
+    print("finish!!!!!!!!!!!!!!!!!!!!!")
 
 
 

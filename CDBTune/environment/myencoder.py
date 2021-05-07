@@ -3,6 +3,7 @@ import knobs
 from encoder_tune import *
 import os
 import knobs
+import pdb
 
 BEST_NOW = ""
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -29,7 +30,7 @@ class MyEncoder(object):
         #create an x265 encoder
         encoder_create(self.width, self.height, self.fps)
         #load the picture queue with frames in it's own thread
-        push_frame_thread(self.video)
+        # push_frame_thread(self.video)
         
         # create a new thread to push frames
         # c++ main w/o l116
@@ -48,7 +49,7 @@ class MyEncoder(object):
     def _get_internal_metrics(self):
 
         #Do the Encode
-        encoder_fps = float(encoder_run())
+        encode_fps = float(encoder_run())
         stats = get_frame_stats()
         
         #get the frame Stats
@@ -103,13 +104,14 @@ class MyEncoder(object):
     def step(self, knob):
         #apply_knobs
         #Yiming?
+        restart_time = 123 # random value
         filename = 'bestnow.log'
         flag = self._apply_knobs(knob)
-        if not flag:
-            return -10000000.0, np.array([0] * self.num_metric), True, self.score - 10000000, [0, 0, 0]
-        s = self._get_state(knob)
+        if flag != 0:
+            return -10000000.0, np.array([0] * self.num_metric), True, self.score - 10000000, [0, 0, 0], restart_time
+        s = self._get_state()
         if s is None:
-            return -10000000.0, np.array([0] * self.num_metric), True, self.score - 10000000, [0, 0, 0]
+            return -10000000.0, np.array([0] * self.num_metric), True, self.score - 10000000, [0, 0, 0], restart_time
         external_metrics, internal_metrics = s
         
         reward = self._get_reward(external_metrics)
@@ -123,28 +125,47 @@ class MyEncoder(object):
         self.last_external_metrics = best_now_performance
         
         next_state = internal_metrics
+        self.terminate = self._encode_complete()
         terminate = self._terminate()
         knobs.save_knobs(
             knob=knob,
             metrics=external_metrics,
             knob_file='%s/tuner/save_knobs/knob_metric.txt' % PROJECT_DIR
         )
-        return reward, next_state, terminate, self.score, external_metrics
-    
         
+        return reward, next_state, terminate, self.score, external_metrics, restart_time
+    
+    def set_video(self, video):
+        self.video = video
+       
     def _get_state(self):
         #ssim is both external and internal - encode fps is only external     
         internal_metrics, encode_fps = self._get_internal_metrics() #calls encoder
         external_metrics = [internal_metrics['ssim'], encode_fps]
-
-        return external_metrics, internal_metrics
+        
+        # turn internal_metrics into a list of values
+        #pdb.set_trace()
+        keys = internal_metrics.keys()
+        keys.sort()
+        
+        result = np.zeros(self.num_metric)
+        for idx in xrange(len(keys)):
+            key = keys[idx]
+            data = internal_metrics[key]
+            result[idx] = data
+            
+        return external_metrics, result
         
         
     def _apply_knobs(self, knob):
         """ Apply Knobs to the instance
         """
         #Yiming <"thread_pools","32">
-        return encoder_config(knob)
+        knob_list = []
+        for k, v in knob.items():
+            kv = (k, str(v))
+            knob_list.append(kv)
+        return encoder_config(knob_list)
         
     
     def initialize(self):
@@ -154,6 +175,7 @@ class MyEncoder(object):
         self.steps = 0
         self.terminate = False
         self.last_external_metrics = []
+        push_frame_thread(self.video)
         flag = self._apply_knobs(self.default_knobs)
         i = 0
         while not flag:
