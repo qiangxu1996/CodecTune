@@ -14,7 +14,7 @@ import argparse
 sys.path.append('../')
 import models
 import numpy as np
-import environment
+import environment 
 import pdb
 
 
@@ -48,7 +48,8 @@ if __name__ == '__main__':
     opt = parser.parse_args()
 
     # Create Environment
-    env = environment.MyEncoder("NULL", opt.width, opt.height, opt.fps, opt.metric_num)
+    print(environment)
+    env = environment.MyEncoder('null', opt.width, opt.height, opt.fps, opt.metric_num)
 
     # Build models
     ddpg_opt = dict()
@@ -133,7 +134,7 @@ if __name__ == '__main__':
     fp = open(opt.input)
     lines = fp.readlines()
     for line in lines:
-        filelist.append(line)
+        filelist.append(line.rstrip())
     fp.close()
     
     for episode in xrange(opt.epoches):
@@ -224,11 +225,12 @@ if __name__ == '__main__':
                     # sigma = origin_sigma*(sigma_decay_rate ** (step_counter/10))
 
                 # save network
-                #if step_counter % 5 == 0:
+                if step_counter % 5 == 0:
                 #always save the model
-                model.save_model('model_params', title='{}_{}'.format(expr_name, step_counter))
+                    model.save_model('model_params', title='{}_{}'.format(expr_name, step_counter))
 
                 if done or score < -50:
+                    model.save_model('model_params', title='{}_{}'.format(expr_name, step_counter))
                     break
             
             #break # break after the first epoch
