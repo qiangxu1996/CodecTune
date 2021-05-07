@@ -1,0 +1,15 @@
+#!/bin/sh -l
+# FILENAME: trainingSlurmScript
+
+#LOAD ANY MODULES
+#module load ffmpeg
+
+# Change to the directory from which you originally submitted this job.
+cd $SLURM_SUBMIT_DIR
+
+cd /home/alexa157/CodecTune/CDBTune/tuner/
+# Runs a python script
+python ./train.py --input /home/alexa157/CodecTune/CDBTune/globfile --width 1280 --height 720 --fps 30
+
+
+cd $SLURM_SUBMIT_DIR
