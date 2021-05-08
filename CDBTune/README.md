@@ -2,10 +2,13 @@
 
 - C++
    - OpenCV
+
    ```OpenCV
    apt-get install libopencv-dev
    ```
+   
    - oneTBB
+
    ```TBB
    git clone https://github.com/wjakob/tbb.git
    cd tbb/build
@@ -30,16 +33,19 @@
    for linux system. 
 - Build encoder_tune.cpp
    - In `CodecTune/CDBTune/environment`,
+   
       ```mkdir
       mkdir build
       cmake .. && make
       ```
+      
    - Copy `encoder_tune.so` and replace it in `environment`
 
 ## Train
 
 - In `CodecTune/CDBTune/tuner`
 - Run `train.py`. Example:
+
    ```train
    python train.py --input [video path/video.mkv] --width 1920 --height 1080 --fps 30
    ```
