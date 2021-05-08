@@ -27,9 +27,11 @@
 
 - Build x265 Encoder
    Follow x265_git (https://bitbucket.org/multicoreware/x265_git/wiki/Home) instructions to build x265 encoder. Afterwards, 
+   
    ```x265
    make install
    ```
+   
    for linux system. 
 - Build encoder_tune.cpp
    - In `CodecTune/CDBTune/environment`,
