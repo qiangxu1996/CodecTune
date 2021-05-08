@@ -54,4 +54,6 @@
    python train.py --input [video path/video.mkv] --width 1920 --height 1080 --fps 30
    ```
 
+## Acknowledgement
+The DDPG reinforcement learning network presented here is directly inherited from CDBTune. The knobs.py mysql.py and train.py were modified accordingly to the x265 encoder environment so that the RL network training can apply to encoder configuration optimization. 
 
