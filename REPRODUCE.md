@@ -1,6 +1,6 @@
 ## Reproduction
 - Prerequisites
-  -Training and Preset Data
+  - Training and Preset Data
     - AMD EPYC 7662 with 256GB of memory
       ```
       https://www.rcac.purdue.edu/compute/bell
@@ -9,7 +9,7 @@
       ```
       https://media.withyoutube.com/
       ```
-  -Fixed Workload Data
+  - Fixed Workload Data
     ```
     TBD QIANG
     ```
