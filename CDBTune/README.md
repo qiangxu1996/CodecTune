@@ -45,13 +45,13 @@
       
    - Copy `encoder_tune.so` and replace it in `environment`
 
-## Train
+## Training
 
 - In `CodecTune/CDBTune/tuner`
 - Run `train.py`. Example:
 
    ```train
-   python train.py --input [video path/video.mkv] --width 1920 --height 1080 --fps 30
+   python train.py --input <text file listing the mkv videos to train against> --width 1920 --height 1080 --fps 30
    ```
 
 ## Acknowledgement
